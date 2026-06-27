@@ -12,6 +12,11 @@ html = '''<style>
 .sxng-pv-dot{width:10px;height:10px;background:#10b981;border-radius:50%;animation:sxngPulse 2s infinite;flex-shrink:0}
 @keyframes sxngPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.sxng-api-bar{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #10b981;border-radius:12px;padding:16px;margin:16px auto;max-width:600px;font-family:system-ui}
+.sxng-api-bar h4{font-size:14px;color:#166534;margin:0 0 10px;font-weight:700;display:flex;align-items:center;gap:6px}
+.sxng-api-bar pre{font-size:11px;background:#1e293b;color:#e2e8f0;padding:12px;border-radius:8px;overflow-x:auto;margin:0 0 10px;word-break:break-all;max-height:80px}
+.sxng-api-bar .copy-btn{background:#10b981;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600}
+.sxng-api-bar .copy-btn:hover{background:#059669}
 .sxng-panel{position:fixed;top:0;right:-420px;width:400px;height:100vh;background:#fff;z-index:100000;box-shadow:-4px 0 50px rgba(0,0,0,.3);transition:right .3s ease;display:flex;flex-direction:column;font-family:system-ui}
 .sxng-panel.open{right:0}
 .sxng-phdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,#10b981,#059669);color:#fff}
@@ -61,9 +66,9 @@ html = '''<style>
 .sxng-panel,.sxng-pv-panel{width:100vw;right:-100%;left:-100%}
 .sxng-panel.open,.sxng-pv-panel.open{right:0;left:0}
 }</style>
-<div class="sxng-ov" id="sxngOv" onclick="sxngClose()"></div>
+<div class="sxng-ov" id="sxngOv"></div>
 <div class="sxng-pv-panel" id="sxngPvPanel">
-<div class="sxng-pv-hdr"><h3>Privacy & Security</h3><button class="sxng-close" onclick="sxngPvClose()">X</button></div>
+<div class="sxng-pv-hdr"><h3>Privacy & Security</h3><button class="sxng-close" id="sxngClosePvBtn">X</button></div>
 <div class="sxng-pv-body">
 <div class="sxng-pv-stat">
 <h4>Privacy Mode</h4>
@@ -71,6 +76,7 @@ html = '''<style>
 <button class="sxng-mode-btn fast" id="mode-fast" onclick="sxngSetMode('fast')"><div><strong>Speed</strong><small>Fast, some tracking blocked</small></div><span>⚡ Fast</span></button>
 <button class="sxng-mode-btn" id="mode-balanced" onclick="sxngSetMode('balanced')"><div><strong>Balanced</strong><small>Good privacy + E2EE</small></div><span>🛡 Good</span></button>
 <button class="sxng-mode-btn max" id="mode-max" onclick="sxngSetMode('max')"><div><strong>Maximum</strong><small>Full E2EE + IP spoofing</small></div><span>🔒 Max</span></button>
+<button class="sxng-mode-btn ultra" id="mode-ultra" onclick="sxngSetMode('ultra')"><div><strong>Ultra</strong><small>Maximum privacy + Tor + NoJS</small></div><span>🛡️ Ultra</span></button>
 </div>
 </div>
 <div class="sxng-pv-stat">
@@ -84,40 +90,193 @@ html = '''<style>
 <div class="sxng-pv-api" id="sxngPvApi">
 <h4>Zero-Config API</h4>
 <pre id="sxngPvKey">Loading...</pre>
-<button class="sxng-pv-copy" onclick="sxngPvCopy()">Copy API Key</button>
+<button class="sxng-pv-copy" id="sxngCopyBtn">Copy API Key</button>
 </div>
 </div>
 </div>
 <div class="sxng-panel" id="sxngPanel">
-<div class="sxng-phdr"><h3>AI Assistant</h3><button class="sxng-close" onclick="sxngClose()">X</button></div>
+<div class="sxng-phdr"><h3>AI Assistant</h3><button class="sxng-close" id="sxngCloseAiBtn">X</button></div>
 <div class="sxng-pbody">
-<button class="sxng-sbtn" onclick="sxngSum()">Summary</button>
+<button class="sxng-sbtn" id="sxngSumBtn">Get AI Summary</button>
 <div class="sxng-sum" id="sxngSum"></div>
 <div id="sxngMsgs"></div>
 </div>
 <div class="sxng-pfoot">
-<input type="text" id="sxngInp" placeholder="Ask AI..." onkeypress="if(event.key===13)sxngSend()">
-<button onclick="sxngSend()">></button>
+<input type="text" id="sxngInp" placeholder="Ask AI...">
+<button id="sxngSendBtn">></button>
 </div>
 </div>
 <div class="sxng-ai-wrap">
-<button class="sxng-ai-btn" onclick="sxngOpen()">AI</button>
+<button class="sxng-ai-btn" id="sxngAiBtn">AI</button>
 </div>
 <div class="sxng-pv-wrap">
-<button class="sxng-pv-btn" onclick="sxngPvOpen()"><span class="sxng-pv-dot"></span>Privacy</button>
+<button class="sxng-pv-btn" id="sxngPvBtn"><span class="sxng-pv-dot"></span>Privacy</button>
 </div>
-<script>
+<div class="sxng-api-bar" id="sxngApiBar">
+<h4>🔑 Free API Access</h4>
+<pre id="sxngApiKey">Loading...</pre>
+<button class="copy-btn" id="sxngApiCopyBtn">Copy API Key</button>
+</div>
+<script nonce="b734ddd0d9711930a003189718e1ea7f">
 (function(){
 var h=[];
-function sxngOpen(){document.getElementById("sxngPanel").classList.add("open");document.getElementById("sxngOv").classList.add("show");document.body.style.overflow="hidden";document.getElementById("sxngInp").focus()}
-function sxngClose(){document.getElementById("sxngPanel").classList.remove("open");document.getElementById("sxngOv").classList.remove("show");document.body.style.overflow=""}
-function sxngPvOpen(){document.getElementById("sxngPvPanel").classList.add("open");document.getElementById("sxngOv").classList.add("show");document.body.style.overflow="hidden";if(document.getElementById("sxngPvKey").textContent==="Loading..."){fetch("/api/zero-config").then(r=>r.json()).then(function(d){document.getElementById("sxngPvKey").textContent=JSON.stringify(d,null,2)})}}
-function sxngPvClose(){document.getElementById("sxngPvPanel").classList.remove("open");document.getElementById("sxngOv").classList.remove("show");document.body.style.overflow=""}
-function sxngPvCopy(){navigator.clipboard.writeText(document.getElementById("sxngPvKey").textContent);alert("Copied!")}
-function sxngTyp(){var d=document.createElement("div");d.className="sxng-msg ai ld";d.innerHTML='<span class="sxng-typing"><span></span><span></span><span></span></span>';document.getElementById("sxngMsgs").appendChild(d);return d}
-function sxngSum(){var q=document.querySelector("input[name=q]")?.value||"";var e=document.getElementById("sxngSum");if(!q){e.innerHTML="Search something first!";e.classList.add("show");return}e.innerHTML="Loading...";e.classList.add("show");fetch("/api/summary",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q})}).then(r=>r.json()).then(function(d){e.innerHTML=(d.summary||"No summary").replace(/\\n/g,"<br>")}).catch(function(){e.innerHTML="Error loading summary"})}
-function sxngSend(){var i=document.getElementById("sxngInp");var m=i.value.trim();if(!m)return;h.push({role:"user",content:m});i.value="";var t=sxngTyp();fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:m})}).then(r=>r.json()).then(function(d){t.classList.remove("ld");t.classList.add("ai");t.innerHTML=(d.response||"No response").replace(/\\n/g,"<br>");h.push({role:"ai",content:d.response})}).catch(function(){t.classList.remove("ld");t.classList.add("err");t.innerHTML="Error"})}
-window.sxngOpen=sxngOpen;window.sxngClose=sxngClose;window.sxngPvOpen=sxngPvOpen;window.sxngPvClose=sxngPvClose;
+
+// OPEN AI PANEL
+function sxngOpenAi(){
+  document.getElementById("sxngPanel").classList.add("open");
+  document.getElementById("sxngOv").classList.add("show");
+  document.body.style.overflow="hidden";
+  setTimeout(function(){document.getElementById("sxngInp").focus()},100);
+}
+
+// CLOSE AI PANEL  
+function sxngCloseAi(){
+  document.getElementById("sxngPanel").classList.remove("open");
+  document.getElementById("sxngOv").classList.remove("show");
+  document.body.style.overflow="";
+}
+
+// OPEN PRIVACY PANEL
+function sxngOpenPv(){
+  document.getElementById("sxngPvPanel").classList.add("open");
+  document.getElementById("sxngOv").classList.add("show");
+  document.body.style.overflow="hidden";
+  if(document.getElementById("sxngPvKey").textContent==="Loading..."){
+    fetch("/api/zero-config").then(function(r){return r.json()}).then(function(d){
+      document.getElementById("sxngPvKey").textContent=JSON.stringify(d,null,2);
+    });
+  }
+}
+
+// CLOSE PRIVACY PANEL
+function sxngClosePv(){
+  document.getElementById("sxngPvPanel").classList.remove("open");
+  document.getElementById("sxngOv").classList.remove("show");
+  document.body.style.overflow="";
+}
+
+// CLOSE ALL
+function sxngCloseAll(){
+  sxngCloseAi();
+  sxngClosePv();
+}
+
+// COPY API KEY
+function sxngCopyKey(){
+  var key=document.getElementById("sxngPvKey").textContent;
+  navigator.clipboard.writeText(key);
+  alert("API Key Copied!");
+}
+
+// TYPING INDICATOR
+function sxngTyp(){
+  var d=document.createElement("div");
+  d.className="sxng-msg ai ld";
+  d.innerHTML='<span class="sxng-typing"><span></span><span></span><span></span></span>';
+  document.getElementById("sxngMsgs").appendChild(d);
+  return d;
+}
+
+// GET AI SUMMARY
+function sxngGetSummary(){
+  var q=document.querySelector("input[name=q]")?document.querySelector("input[name=q]").value:"";
+  var e=document.getElementById("sxngSum");
+  if(!q){e.innerHTML="Search something first!";e.classList.add("show");return;}
+  e.innerHTML="Loading...";e.classList.add("show");
+  fetch("/api/summary",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q})})
+    .then(function(r){return r.json()})
+    .then(function(d){e.innerHTML=(d.summary||"No summary").replace(/\\n/g,"<br>")})
+    .catch(function(){e.innerHTML="Error loading summary"});
+}
+
+// CHAT
+function sxngSendMsg(){
+  var i=document.getElementById("sxngInp");
+  var m=i.value.trim();
+  if(!m)return;
+  h.push({role:"user",content:m});
+  i.value="";
+  var t=sxngTyp();
+  fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:m})})
+    .then(function(r){return r.json()})
+    .then(function(d){
+      t.classList.remove("ld");
+      t.classList.add("ai");
+      t.innerHTML=(d.response||"No response").replace(/\\n/g,"<br>");
+      h.push({role:"ai",content:d.response});
+    })
+    .catch(function(){
+      t.classList.remove("ld");
+      t.classList.add("err");
+      t.innerHTML="Error connecting to AI";
+    });
+}
+
+// ATTACH EVENTS ON DOM READY
+document.addEventListener("DOMContentLoaded",function(){
+  // AI button
+  var aiBtn=document.getElementById("sxngAiBtn");
+  if(aiBtn)aiBtn.addEventListener("click",sxngOpenAi);
+  
+  // Privacy button
+  var pvBtn=document.getElementById("sxngPvBtn");
+  if(pvBtn)pvBtn.addEventListener("click",sxngOpenPv);
+  
+  // Overlay close
+  var ov=document.getElementById("sxngOv");
+  if(ov)ov.addEventListener("click",sxngCloseAll);
+  
+  // AI close button
+  var aiCloseBtn=document.getElementById("sxngCloseAiBtn");
+  if(aiCloseBtn)aiCloseBtn.addEventListener("click",sxngCloseAi);
+  
+  // Privacy close button
+  var pvCloseBtn=document.getElementById("sxngClosePvBtn");
+  if(pvCloseBtn)pvCloseBtn.addEventListener("click",sxngClosePv);
+  
+  // Summary button
+  var sumBtn=document.getElementById("sxngSumBtn");
+  if(sumBtn)sumBtn.addEventListener("click",sxngGetSummary);
+  
+  // Chat send
+  var sendBtn=document.getElementById("sxngSendBtn");
+  if(sendBtn)sendBtn.addEventListener("click",sxngSendMsg);
+  
+  // Chat input enter key
+  var inp=document.getElementById("sxngInp");
+  if(inp)inp.addEventListener("keypress",function(e){if(e.key==="Enter")sxngSendMsg()});
+  
+  // Privacy panel copy button
+  var cpBtn=document.getElementById("sxngCopyBtn");
+  if(cpBtn)cpBtn.addEventListener("click",sxngCopyKey);
+  
+  // API bar copy button
+  var apiCpBtn=document.getElementById("sxngApiCopyBtn");
+  if(apiCpBtn)apiCpBtn.addEventListener("click",function(){
+    var key=document.getElementById("sxngApiKey").textContent;
+    navigator.clipboard.writeText(key);
+    alert("API Key Copied!");
+  });
+  
+  // Load API bar key
+  if(document.getElementById("sxngApiKey").textContent==="Loading..."){
+    fetch("/api/zero-config").then(function(r){return r.json()}).then(function(d){
+      document.getElementById("sxngApiKey").textContent=JSON.stringify(d,null,2);
+    });
+  }
+  
+  console.log("SearXNG Pro UI loaded - CSP compliant");
+});
+
+// EXPOSE GLOBALS
+window.sxngOpenAi=sxngOpenAi;
+window.sxngCloseAi=sxngCloseAi;
+window.sxngOpenPv=sxngOpenPv;
+window.sxngClosePv=sxngClosePv;
+window.sxngCloseAll=sxngCloseAll;
+window.sxngCopyKey=sxngCopyKey;
+window.sxngGetSummary=sxngGetSummary;
+window.sxngSendMsg=sxngSendMsg;
 })();
 </script>'''
 if os.path.exists(base):
