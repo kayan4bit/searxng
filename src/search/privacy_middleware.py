@@ -119,3 +119,18 @@ def PrivacyMiddleware(app):
         logs = [{"user": row[0], "requests": row[1]} for row in cursor.fetchall()]
         conn.close()
         return jsonify({"top_users": logs})
+
+    @app.route("/api/node/register", methods=["POST"])
+    def node_register():
+        data = request.get_json() or {}
+        email = data.get("email", "")
+        name = data.get("name", "")
+        if not email or not name:
+            return jsonify({"error": "Email and name required"}), 400
+        node_id = f"node_{secrets.token_hex(8)}"
+        conn = sqlite3.connect(user_db)
+        conn.execute("INSERT INTO railway_logs (user_num, action, ip_hash, region) VALUES (?, ?, ?, ?)",
+                    (node_id, f"node_register:{name}", hashlib.sha256(request.remote_addr.encode()).hexdigest()[:8], "EU-West"))
+        conn.commit()
+        conn.close()
+        return jsonify({"node_id": node_id, "status": "registered"})
