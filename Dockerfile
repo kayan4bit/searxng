@@ -68,11 +68,13 @@ RUN sed -i "/'simple_style': EnumStringSetting(/,/center_alignment/ s/choices=\[
 && sed -i "s/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black')/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black', 'paulgo', 'latte', 'frappe', 'macchiato', 'mocha', 'kagi', 'brave', 'moa', 'night', 'dracula', 'gruvbox', 'gruvboxmat', 'everforest', 'nord', 'matcha', 'evergarden', 'catppuccin-mocha', 'catppuccin-macchiato', 'catppuccin-frappe', 'catppuccin-latte', 'tokyo-night', 'solarized', 'one-dark', 'monokai', 'gruvbox-light', 'github', 'nord-frost', 'dracula-pro', 'material-ocean')/" searx/settings_defaults.py \
 && sed -i "s/{%- for name in \['auto', 'light', 'dark', 'black'\] -%}/{%- for name in \['auto', 'light', 'dark', 'black', 'paulgo', 'latte', 'frappe', 'macchiato', 'mocha', 'kagi', 'brave', 'moa', 'night', 'dracula', 'gruvbox', 'gruvboxmat', 'everforest', 'nord', 'matcha', 'evergarden', 'catppuccin-mocha', 'catppuccin-macchiato', 'catppuccin-frappe', 'catppuccin-latte', 'tokyo-night', 'solarized', 'one-dark', 'monokai', 'gruvbox-light', 'github', 'nord-frost', 'dracula-pro', 'material-ocean'\] -%}/" searx/templates/simple/preferences/theme.html
 
-# Enable Kagi engine and disable others using sed
-RUN sed -i 's/# - name: kagi/- name: kagi/' searx/settings.yml \
-&& sed -i 's/#   engine: kagi/  engine: kagi/' searx/settings.yml \
-&& sed -i 's/#   kagi_categ: search/  kagi_categ: search/' searx/settings.yml \
-&& sed -i 's/#   shortcut: kg/  shortcut: kg/' searx/settings.yml \
+# Enable Serper and Tavily engines (Kagi-style ranking) using sed
+RUN sed -i 's/# - name: serper/- name: serper/' searx/settings.yml \
+&& sed -i 's/#   engine: serper/  engine: serper/' searx/settings.yml \
+&& sed -i 's/#   shortcut: sr/  shortcut: sr/' searx/settings.yml \
+&& sed -i 's/# - name: tavily/- name: tavily/' searx/settings.yml \
+&& sed -i 's/#   engine: tavily/  engine: tavily/' searx/settings.yml \
+&& sed -i 's/#   shortcut: tv/  shortcut: tv/' searx/settings.yml \
 && sed -i 's/simple_style: auto/simple_style: dracula-pro/' searx/settings.yml \
 && sed -i 's/safe_search: 0/safe_search: 1/' searx/settings.yml \
 && sed -i 's/method: "POST"/method: "GET"/' searx/settings.yml
@@ -102,8 +104,9 @@ COPY --chown=searxng:searxng ./src/search/supplemental_timeout.py searx/search/s
 COPY --chown=searxng:searxng ./src/search/google_autocomplete_icons.py searx/search/google_autocomplete_icons.py
 COPY --chown=searxng:searxng ./src/search/privau_wsgi.py searx/privau_wsgi.py
 
-# Kagi search engine (proxied web scraping without API key) with priority domains
-COPY --chown=searxng:searxng ./src/engines/kagi.py searx/engines/kagi.py
+# Serper and Tavily search engines (Kagi-style ranking)
+COPY --chown=searxng:searxng ./src/engines/serper.py searx/engines/serper.py
+COPY --chown=searxng:searxng ./src/engines/tavily.py searx/engines/tavily.py
 
 # Privacy, Zero-Knowledge E2EE, and AI modules
 COPY --chown=searxng:searxng ./src/search/privacy_e2ee.py searx/search/privacy_e2ee.py
@@ -124,13 +127,18 @@ COPY --chown=searxng:searxng ./src/less/themes/ searx/less/themes/
 # fix opensearch autocompleter (force method of autocompleter to use GET reuqests)
 RUN sed -i '/{% if autocomplete %}/,/{% endif %}/s|method="{{ opensearch_method }}"|method="GET"|g' searx/templates/simple/opensearch.xml
 
+# Add static file cache headers for speed
+RUN sed -i "s|SEND_FILE_MAX_AGE_DEFAULT = 3600|SEND_FILE_MAX_AGE_DEFAULT = 86400|" searx/webapp.py
+
 EXPOSE 8080
 
-# set env - Kagi is now the primary default, zero-config E2EE
-ENV GRANIAN_PROCESS_NAME="searxng" GRANIAN_INTERFACE="wsgi" GRANIAN_HOST="::" GRANIAN_PORT="8080" GRANIAN_WEBSOCKETS="false" GRANIAN_BLOCKING_THREADS="4" GRANIAN_WORKERS_KILL_TIMEOUT="30" GRANIAN_BLOCKING_THREADS_IDLE_TIMEOUT="300"
-ENV IMAGE_PROXY=true
+# set env - RAILWAY OPTIMIZED for speed and low memory
+ENV GRANIAN_PROCESS_NAME="searxng" GRANIAN_INTERFACE="wsgi" GRANIAN_HOST="::" GRANIAN_PORT="8080" GRANIAN_WEBSOCKETS="false" GRANIAN_BLOCKING_THREADS="2" GRANIAN_WORKERS="1" GRANIAN_WORKERS_KILL_TIMEOUT="30" GRANIAN_BLOCKING_THREADS_IDLE_TIMEOUT="600"
+ENV IMAGE_PROXY=false
 ENV PROXY=""
 ENV REDIS_URL=""
+ENV SEARXNG_DB_PATH="/tmp/searxng_cache"
+ENV SEARXNG_DISABLE_HTTP_CACHE="false"
 ENV LIMITER=""
 ENV BASE_URL=""
 ENV SECRET_KEY=""
