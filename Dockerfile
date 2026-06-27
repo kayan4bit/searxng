@@ -60,10 +60,10 @@ COPY --chown=searxng:searxng ./src/run.sh /usr/local/bin/run.sh
 COPY --chown=searxng:searxng ./src/limiter.toml /etc/searxng/limiter.toml
 COPY --chown=searxng:searxng ./src/favicons.toml /etc/searxng/favicons.toml
 
-# make our patches to searxng's code to allow for the custom theming
-RUN sed -i "/'simple_style': EnumStringSetting(/,/center_alignment/ s/choices=\[\"\", \"auto\", \"light\", \"dark\", \"black\"\]/choices=[\"\", \"auto\", \"light\", \"dark\", \"black\", \"paulgo\", \"latte\", \"frappe\", \"macchiato\", \"mocha\", \"kagi\", \"brave\", \"moa\", \"night\", \"dracula\", \"gruvbox\", \"gruvboxmat\", \"everforest\", \"nord\", \"matcha\", \"evergarden\"]/" searx/preferences.py \
-&& sed -i "s/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black')/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black', 'paulgo', 'latte', 'frappe', 'macchiato', 'mocha', 'kagi', 'brave', 'moa', 'night', 'dracula', 'gruvbox', 'gruvboxmat', 'everforest', 'nord', 'matcha', 'evergarden')/" searx/settings_defaults.py \
-&& sed -i "s/{%- for name in \['auto', 'light', 'dark', 'black'\] -%}/{%- for name in \['auto', 'light', 'dark', 'black', 'paulgo', 'latte', 'frappe', 'macchiato', 'mocha', 'kagi', 'brave', 'moa', 'night', 'dracula', 'gruvbox', 'gruvboxmat', 'everforest', 'nord', 'matcha', 'evergarden'\] -%}/" searx/templates/simple/preferences/theme.html
+# make our patches to searxng's code to allow for the custom theming (all Catppuccin themes + extras)
+RUN sed -i "/'simple_style': EnumStringSetting(/,/center_alignment/ s/choices=\[\"\", \"auto\", \"light\", \"dark\", \"black\"\]/choices=[\"\", \"auto\", \"light\", \"dark\", \"black\", \"paulgo\", \"latte\", \"frappe\", \"macchiato\", \"mocha\", \"kagi\", \"brave\", \"moa\", \"night\", \"dracula\", \"gruvbox\", \"gruvboxmat\", \"everforest\", \"nord\", \"matcha\", \"evergarden\", \"catppuccin-mocha\", \"catppuccin-macchiato\", \"catppuccin-frappe\", \"catppuccin-latte\", \"tokyo-night\", \"solarized\", \"one-dark\", \"monokai\", \"gruvbox-light\"]/" searx/preferences.py \
+&& sed -i "s/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black')/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black', 'paulgo', 'latte', 'frappe', 'macchiato', 'mocha', 'kagi', 'brave', 'moa', 'night', 'dracula', 'gruvbox', 'gruvboxmat', 'everforest', 'nord', 'matcha', 'evergarden', 'catppuccin-mocha', 'catppuccin-macchiato', 'catppuccin-frappe', 'catppuccin-latte', 'tokyo-night', 'solarized', 'one-dark', 'monokai', 'gruvbox-light')/" searx/settings_defaults.py \
+&& sed -i "s/{%- for name in \['auto', 'light', 'dark', 'black'\] -%}/{%- for name in \['auto', 'light', 'dark', 'black', 'paulgo', 'latte', 'frappe', 'macchiato', 'mocha', 'kagi', 'brave', 'moa', 'night', 'dracula', 'gruvbox', 'gruvboxmat', 'everforest', 'nord', 'matcha', 'evergarden', 'catppuccin-mocha', 'catppuccin-macchiato', 'catppuccin-frappe', 'catppuccin-latte', 'tokyo-night', 'solarized', 'one-dark', 'monokai', 'gruvbox-light'\] -%}/" searx/templates/simple/preferences/theme.html
 
 # make patch to allow the privacy policy page
 COPY --chown=searxng:searxng ./src/privacy-policy/privacy-policy.html searx/templates/simple/privacy-policy.html
@@ -90,25 +90,23 @@ COPY --chown=searxng:searxng ./src/search/supplemental_timeout.py searx/search/s
 COPY --chown=searxng:searxng ./src/search/google_autocomplete_icons.py searx/search/google_autocomplete_icons.py
 COPY --chown=searxng:searxng ./src/search/privau_wsgi.py searx/privau_wsgi.py
 
-# Kagi search engine (proxied web scraping without API key)
+# Kagi search engine (proxied web scraping without API key) with priority domains
 COPY --chown=searxng:searxng ./src/engines/kagi.py searx/engines/kagi.py
 
-# Privacy and E2EE module
+# Privacy, Zero-Knowledge E2EE, and AI modules
 COPY --chown=searxng:searxng ./src/search/privacy_e2ee.py searx/search/privacy_e2ee.py
-
-# AI Summarization module
 COPY --chown=searxng:searxng ./src/search/ai_summarize.py searx/search/ai_summarize.py
 
 # fix opensearch autocompleter (force method of autocompleter to use GET reuqests)
 RUN sed -i '/{% if autocomplete %}/,/{% endif %}/s|method="{{ opensearch_method }}"|method="GET"|g' searx/templates/simple/opensearch.xml
 
-# set default settings
+# set default settings - Kagi is now the PRIMARY default engine
 RUN sed -i -e "/safe_search:/s/0/1/g" \
 -e "/autocomplete:/s/\"\"/\"google\"/g" \
 -e "/autocomplete_min:/s/4/0/g" \
 -e "/favicon_resolver:/s/\"\"/\"google\"/g" \
 -e "/port:/s/8888/8080/g" \
--e "/simple_style:/s/auto/macchiato/g" \
+-e "/simple_style:/s/auto/kagi/g" \
 -e '/searx\.plugins\.infinite_scroll\.SXNGPlugin:/{n;s/active: false/active: true/;}' \
 -e "/query_in_title:/s/false/true/g" \
 -e '/default_lang:/s/ ""/ en/g' \
@@ -183,14 +181,15 @@ RUN sed -i -e "/safe_search:/s/0/1/g" \
 -e "/engine: startpage/s/$/\n    disabled: true/g" \
 -e "/name: ddg definitions/,+5{/disabled: true/d;}" \
 -e "/shortcut: fd/{n;s/.*/    disabled: false/}" \
-searx/settings.yml;
+-e "/name: google/s/$/\n    disabled: true/g" \
+-searx/settings.yml;
 
 EXPOSE 8080
 
-# set env
+# set env - Kagi is now the primary default, zero-config E2EE
 ENV GRANIAN_PROCESS_NAME="searxng" GRANIAN_INTERFACE="wsgi" GRANIAN_HOST="::" GRANIAN_PORT="8080" GRANIAN_WEBSOCKETS="false" GRANIAN_BLOCKING_THREADS="4" GRANIAN_WORKERS_KILL_TIMEOUT="30" GRANIAN_BLOCKING_THREADS_IDLE_TIMEOUT="300" \
 IMAGE_PROXY=true PROXY= REDIS_URL= LIMITER= BASE_URL= SECRET_KEY= CAPTCHA= AUTHORIZED_API= MARGINALIA_API= NAME= SEARCH_DEFAULT_LANG= SEARCH_ENGINE_ACCESS_DENIED= SEARCH_ENGINE_CAPTCHA= PUBLIC_INSTANCE= \
-GOOGLE_DEFAULT=true BING_DEFAULT= BRAVE_DEFAULT= DUCKDUCKGO_DEFAULT= WIKIPEDIA_DEFAULT= WIKIDATA_DEFAULT= DDG_DEFINITIONS_DEFAULT= KAGI_DEFAULT=true \
+KAGI_DEFAULT=true GOOGLE_DEFAULT=false BING_DEFAULT= BRAVE_DEFAULT= DUCKDUCKGO_DEFAULT= WIKIPEDIA_DEFAULT= WIKIDATA_DEFAULT= DDG_DEFINITIONS_DEFAULT= \
 OPENMETRICS= \
 PRIVACYPOLICY= \
 DONATE= \
@@ -199,7 +198,11 @@ MONERO_ADDRESS= \
 CONTACT=https://vojk.au \
 FOOTER_MESSAGE= \
 ISSUE_URL=https://github.com/privau/searxng/issues GIT_URL=https://github.com/privau/searxng GIT_BRANCH=main \
-E2EE_SEED= \
-SUMMARIZER_MODEL=facebook/bart-large-cnn
+E2EE_MODE=auto \
+E2EE_AUTO_KEY=true \
+SUMMARIZER_MODEL=facebook/bart-large-cnn \
+SUMMARIZER_ENABLED=true \
+PRIVACY_STRICT=true \
+ZERO_KNOWLEDGE_SEARCH=true
 
 CMD ["run.sh"]

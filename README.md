@@ -104,8 +104,36 @@ Use the [Looking Glass](https://lg.as44354.net/) to find the closest one to you.
 
 * ```MARGINALIA_API``` : sets the API key for the Marginalia search engine and enables it (Default: disabled)
 
-* ```KAGI_DEFAULT``` : enable the Kagi search engine by default (Default: `false`)
+* ```KAGI_DEFAULT``` : enable the Kagi search engine by default (Default: `true`)
 
-* ```E2EE_SEED``` : seed for E2EE encryption (Default: random)
+* ```GOOGLE_DEFAULT``` : enable the Google search engine by default (Default: `false`)
+
+## Privacy & Zero-Knowledge Features
+
+* ```E2EE_MODE``` : E2EE mode (`auto`, `strict`, `off`, Default: `auto`)
+
+* ```E2EE_AUTO_KEY``` : Enable automatic key generation (Default: `true`)
+
+* ```PRIVACY_STRICT``` : Enable strict privacy mode (Default: `true`)
+
+* ```ZERO_KNOWLEDGE_SEARCH``` : Enable zero-knowledge search (Default: `true`)
+
+## AI Summarization
 
 * ```SUMMARIZER_MODEL``` : AI model for local summarization (Default: `facebook/bart-large-cnn`)
+
+* ```SUMMARIZER_ENABLED``` : Enable AI summarization (Default: `true`)
+
+## Themes
+
+New themes available:
+- catppuccin-mocha, catppuccin-latte, catppuccin-macchiato, catppuccin-frappe
+- tokyo-night, monokai, solarized, one-dark, gruvbox-light
+
+## API Endpoints
+
+- `GET /api/privacy/status` - Privacy module status
+- `GET /api/zk/key` - Zero-knowledge encryption public key
+- `POST /api/zk/search` - Zero-knowledge encrypted search
+- `GET /api/summarize/status` - AI summarization status
+- `POST /api/summarize` - Summarize search results
