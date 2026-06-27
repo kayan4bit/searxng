@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """SearXNG - E2EE + Privacy + Zero-Config."""
 from flask import request, make_response, jsonify
-import hashlib, hmac, secrets, base64, urllib.request, re, os, sqlite3
+import hashlib, hmac, secrets, base64, urllib.request, re, os, sqlite3, json, time
 
 STRICT_CSP = "default-src 'self'; script-src 'self' 'nonce-{n}' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://google.serper.dev https://api.tavily.com; frame-ancestors 'none'; base-uri 'self'"
 HEADERS = {
@@ -12,6 +12,31 @@ HEADERS = {
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
 }
+
+# Node operator DB
+NODE_DB = "/data/node_operators.db"
+os.makedirs("/data", exist_ok=True)
+_node_conn = sqlite3.connect(NODE_DB, check_same_thread=False)
+_node_conn.execute("""CREATE TABLE IF NOT EXISTS nodes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE,
+    email TEXT,
+    password_hash TEXT,
+    node_key TEXT UNIQUE,
+    node_name TEXT,
+    agreed_tos INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status TEXT DEFAULT 'active'
+)""")
+_node_conn.execute("""CREATE TABLE IF NOT EXISTS sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    node_key TEXT,
+    session_token TEXT UNIQUE,
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)""")
+_node_conn.commit()
 
 def PrivacyMiddleware(app):
     @app.before_request
@@ -119,3 +144,112 @@ def PrivacyMiddleware(app):
         logs = [{"user": row[0], "requests": row[1]} for row in cursor.fetchall()]
         conn.close()
         return jsonify({"top_users": logs})
+
+    # Node Operator Endpoints
+    @app.route("/api/node/register", methods=["POST"])
+    def node_register():
+        data = request.get_json() or {}
+        username = data.get("username", "").strip()
+        email = data.get("email", "").strip()
+        password = data.get("password", "")
+        node_name = data.get("node_name", "").strip()
+        agreed_tos = data.get("agreed_tos", False)
+        
+        if not all([username, email, password, node_name]):
+            return jsonify({"error": "All fields required"}), 400
+        if not agreed_tos:
+            return jsonify({"error": "Must agree to Terms of Service"}), 400
+        
+        cursor = _node_conn.execute("SELECT id FROM nodes WHERE username=?", (username,))
+        if cursor.fetchone():
+            return jsonify({"error": "Username taken"}), 400
+        
+        node_key = f"nk_{secrets.token_hex(16)}"
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        
+        _node_conn.execute("""INSERT INTO nodes (username, email, password_hash, node_key, node_name, agreed_tos) 
+                              VALUES (?, ?, ?, ?, ?, ?)""",
+                          (username, email, password_hash, node_key, node_name, 1))
+        _node_conn.commit()
+        
+        return jsonify({
+            "success": True,
+            "node_key": node_key,
+            "username": username,
+            "message": "Node registered! Keep this tab open to stay connected."
+        })
+
+    @app.route("/api/node/login", methods=["POST"])
+    def node_login():
+        data = request.get_json() or {}
+        username = data.get("username", "")
+        password = data.get("password", "")
+        
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        cursor = _node_conn.execute("SELECT node_key, node_name FROM nodes WHERE username=? AND password_hash=?",
+                                   (username, password_hash))
+        row = cursor.fetchone()
+        
+        if not row:
+            return jsonify({"error": "Invalid credentials"}), 401
+        
+        node_key, node_name = row
+        _node_conn.execute("UPDATE nodes SET last_seen=CURRENT_TIMESTAMP WHERE username=?", (username,))
+        _node_conn.commit()
+        
+        session_token = secrets.token_urlsafe(32)
+        expires = int(time.time()) + 86400 * 30
+        
+        _node_conn.execute("INSERT INTO sessions (node_key, session_token, expires_at) VALUES (?, ?, ?)",
+                          (node_key, session_token, expires))
+        _node_conn.commit()
+        
+        return jsonify({
+            "success": True,
+            "session_token": session_token,
+            "node_key": node_key,
+            "node_name": node_name,
+            "expires_in": 86400 * 30
+        })
+
+    @app.route("/api/node/status", methods=["GET"])
+    def node_status():
+        token = request.args.get("token", "")
+        cursor = _node_conn.execute("SELECT node_key, expires_at FROM sessions WHERE session_token=?", (token,))
+        row = cursor.fetchone()
+        
+        if not row or row[1] < int(time.time()):
+            return jsonify({"online": False, "error": "Session expired"}), 401
+        
+        node_key = row[0]
+        cursor = _node_conn.execute("SELECT node_name, last_seen FROM nodes WHERE node_key=?", (node_key,))
+        node = cursor.fetchone()
+        
+        return jsonify({
+            "online": True,
+            "node_key": node_key,
+            "node_name": node[0] if node else "Unknown",
+            "last_seen": node[1] if node else None
+        })
+
+    @app.route("/api/node/heartbeat", methods=["POST"])
+    def node_heartbeat():
+        token = request.headers.get("X-Session-Token", "")
+        cursor = _node_conn.execute("SELECT node_key, expires_at FROM sessions WHERE session_token=?", (token,))
+        row = cursor.fetchone()
+        
+        if not row or row[1] < int(time.time()):
+            return jsonify({"error": "Session expired"}), 401
+        
+        node_key = row[0]
+        _node_conn.execute("UPDATE nodes SET last_seen=CURRENT_TIMESTAMP WHERE node_key=?", (node_key,))
+        _node_conn.commit()
+        
+        return jsonify({"alive": True, "timestamp": int(time.time())})
+
+    @app.route("/api/nodes/active")
+    def active_nodes():
+        cursor = _node_conn.execute("""SELECT node_name, last_seen FROM nodes 
+                                       WHERE status='active' AND last_seen > datetime('now', '-5 minutes')""")
+        nodes = [{"name": row[0], "last_seen": row[1]} for row in cursor.fetchall()]
+        return jsonify({"active_nodes": nodes, "count": len(nodes)})
