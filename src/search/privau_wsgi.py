@@ -21,3 +21,17 @@ if os.environ.get('DONATE') == '/donate':
         return render('donation.html')
 
 apply_google_autocomplete_icons(app)
+
+# Apply privacy and E2EE patches
+try:
+    from searx.search.privacy_e2ee import apply_privacy_patches
+    apply_privacy_patches(app)
+except ImportError:
+    pass
+
+# Apply AI summarization routes
+try:
+    from searx.search.ai_summarize import apply_summarization_routes
+    apply_summarization_routes(app)
+except ImportError:
+    pass

@@ -1,7 +1,7 @@
 # use alpine as base for searx and set workdir as well as env vars
 FROM docker.io/library/python:3.13-alpine AS builder
 
-ENV UPSTREAM_COMMIT=f8ffbf36f9039ecb232dcfab5263b02b36fed9f5
+ENV UPSTREAM_COMMIT=952896d29e1fdea8d2be89bf656c97036979f059
 
 # install build deps
 RUN apk add --no-cache \
@@ -60,14 +60,18 @@ COPY --chown=searxng:searxng ./src/run.sh /usr/local/bin/run.sh
 COPY --chown=searxng:searxng ./src/limiter.toml /etc/searxng/limiter.toml
 COPY --chown=searxng:searxng ./src/favicons.toml /etc/searxng/favicons.toml
 
-# make our patches to searxng's code to allow for the custom theming
-RUN sed -i "/'simple_style': EnumStringSetting(/,/center_alignment/ s/choices=\[\"\", \"auto\", \"light\", \"dark\", \"black\"\]/choices=[\"\", \"auto\", \"light\", \"dark\", \"black\", \"paulgo\", \"latte\", \"frappe\", \"macchiato\", \"mocha\", \"kagi\", \"brave\", \"moa\", \"night\", \"dracula\", \"gruvbox\", \"gruvboxmat\", \"everforest\", \"nord\", \"matcha\", \"evergarden\"]/" searx/preferences.py \
-&& sed -i "s/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black')/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black', 'paulgo', 'latte', 'frappe', 'macchiato', 'mocha', 'kagi', 'brave', 'moa', 'night', 'dracula', 'gruvbox', 'gruvboxmat', 'everforest', 'nord', 'matcha', 'evergarden')/" searx/settings_defaults.py \
-&& sed -i "s/{%- for name in \['auto', 'light', 'dark', 'black'\] -%}/{%- for name in \['auto', 'light', 'dark', 'black', 'paulgo', 'latte', 'frappe', 'macchiato', 'mocha', 'kagi', 'brave', 'moa', 'night', 'dracula', 'gruvbox', 'gruvboxmat', 'everforest', 'nord', 'matcha', 'evergarden'\] -%}/" searx/templates/simple/preferences/theme.html
+# make our patches to searxng's code to allow for the custom theming (all themes)
+RUN sed -i "/'simple_style': EnumStringSetting(/,/center_alignment/ s/choices=\[\"\", \"auto\", \"light\", \"dark\", \"black\"\]/choices=[\"\", \"auto\", \"light\", \"dark\", \"black\", \"paulgo\", \"latte\", \"frappe\", \"macchiato\", \"mocha\", \"kagi\", \"brave\", \"moa\", \"night\", \"dracula\", \"gruvbox\", \"gruvboxmat\", \"everforest\", \"nord\", \"matcha\", \"evergarden\", \"catppuccin-mocha\", \"catppuccin-macchiato\", \"catppuccin-frappe\", \"catppuccin-latte\", \"tokyo-night\", \"solarized\", \"one-dark\", \"monokai\", \"gruvbox-light\", \"github\", \"nord-frost\", \"dracula-pro\", \"material-ocean\"]/" searx/preferences.py \
+&& sed -i "s/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black')/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black', 'paulgo', 'latte', 'frappe', 'macchiato', 'mocha', 'kagi', 'brave', 'moa', 'night', 'dracula', 'gruvbox', 'gruvboxmat', 'everforest', 'nord', 'matcha', 'evergarden', 'catppuccin-mocha', 'catppuccin-macchiato', 'catppuccin-frappe', 'catppuccin-latte', 'tokyo-night', 'solarized', 'one-dark', 'monokai', 'gruvbox-light', 'github', 'nord-frost', 'dracula-pro', 'material-ocean')/" searx/settings_defaults.py \
+&& sed -i "s/{%- for name in \['auto', 'light', 'dark', 'black'\] -%}/{%- for name in \['auto', 'light', 'dark', 'black', 'paulgo', 'latte', 'frappe', 'macchiato', 'mocha', 'kagi', 'brave', 'moa', 'night', 'dracula', 'gruvbox', 'gruvboxmat', 'everforest', 'nord', 'matcha', 'evergarden', 'catppuccin-mocha', 'catppuccin-macchiato', 'catppuccin-frappe', 'catppuccin-latte', 'tokyo-night', 'solarized', 'one-dark', 'monokai', 'gruvbox-light', 'github', 'nord-frost', 'dracula-pro', 'material-ocean'\] -%}/" searx/templates/simple/preferences/theme.html
 
-# privacy policy and donation page templates
+# make patch to allow the privacy policy page
 COPY --chown=searxng:searxng ./src/privacy-policy/privacy-policy.html searx/templates/simple/privacy-policy.html
+RUN sed -i "/@app\.route('\/client<token>\.css', methods=\['GET', 'POST'\])/i \ \n@app.route('\/privacy', methods=\['GET'\])\ndef privacy_policy():return render('privacy-policy.html')\n" searx/webapp.py
+
+# donation page
 COPY --chown=searxng:searxng ./src/donation/donation.html searx/templates/simple/donation.html
+RUN sed -i "/render('privacy-policy.html')/a @app.route('/donate', methods=\['GET'\])" searx/webapp.py && sed -i "/@app.route('\/donate', methods=\['GET'\])/a def donate():return render('donation.html')" searx/webapp.py
 
 # include patches for captcha
 COPY --chown=searxng:searxng ./src/captcha/captcha.py searx/captcha.py
@@ -86,21 +90,29 @@ COPY --chown=searxng:searxng ./src/search/supplemental_timeout.py searx/search/s
 COPY --chown=searxng:searxng ./src/search/google_autocomplete_icons.py searx/search/google_autocomplete_icons.py
 COPY --chown=searxng:searxng ./src/search/privau_wsgi.py searx/privau_wsgi.py
 
+# Kagi search engine (proxied web scraping without API key) with priority domains
+COPY --chown=searxng:searxng ./src/engines/kagi.py searx/engines/kagi.py
+
+# Privacy, Zero-Knowledge E2EE, and AI modules
+COPY --chown=searxng:searxng ./src/search/privacy_e2ee.py searx/search/privacy_e2ee.py
+COPY --chown=searxng:searxng ./src/search/ai_summarize.py searx/search/ai_summarize.py
+
 # fix opensearch autocompleter (force method of autocompleter to use GET reuqests)
 RUN sed -i '/{% if autocomplete %}/,/{% endif %}/s|method="{{ opensearch_method }}"|method="GET"|g' searx/templates/simple/opensearch.xml
 
-# set default settings
+# set default settings - Kagi is now the PRIMARY default engine
 RUN sed -i -e "/safe_search:/s/0/1/g" \
 -e "/autocomplete:/s/\"\"/\"google\"/g" \
 -e "/autocomplete_min:/s/4/0/g" \
 -e "/favicon_resolver:/s/\"\"/\"google\"/g" \
 -e "/port:/s/8888/8080/g" \
--e "/simple_style:/s/auto/macchiato/g" \
+-e "/simple_style:/s/auto/kagi/g" \
 -e '/searx\.plugins\.infinite_scroll\.SXNGPlugin:/{n;s/active: false/active: true/;}' \
 -e "/query_in_title:/s/false/true/g" \
 -e '/default_lang:/s/ ""/ en/g' \
 -e "/method:/s/\"POST\"/\"GET\"/g" \
 -e "/http_protocol_version:/s/1.0/1.1/g" \
+-e "s/# max_request_timeout: 10.0/max_request_timeout: 5.0/g" \
 -e "/X-Content-Type-Options: nosniff/d" \
 -e "/X-XSS-Protection: 1; mode=block/d" \
 -e "/X-Robots-Tag: noindex, nofollow/d" \
@@ -165,41 +177,32 @@ RUN sed -i -e "/safe_search:/s/0/1/g" \
 -e "/name: yahoo news/s/$/\n    disabled: true/g" \
 -e "/name: bing news/s/$/\n    disabled: true/g" \
 -e "/name: tineye/s/$/\n    disabled: true/g" \
--e "/name: google/s/$/\n    disabled: true/g" \
--e "/name: startpage/s/$/\n    disabled: true/g" \
--e "/name: brave/s/$/\n    disabled: true/g" \
--e "/name: duckduckgo\$/s/$/\n    disabled: true/g" \
--e "/name: wikipedia/s/$/\n    disabled: true/g" \
--e "/name: wikidata/s/$/\n    disabled: true/g" \
--e "/name: luxxle/s/$/\n    disabled: true/g" \
--e "/name: iseek/s/$/\n    disabled: true/g" \
--e "/name: presearch/s/$/\n    disabled: true/g" \
--e "/name: yandex/s/$/\n    disabled: true/g" \
--e "/name: swisscows/s/$/\n    disabled: true/g" \
--e "/name: dogpile\$/s/$/\n    disabled: true/g" \
--e "/name: dogpile images\$/,/disabled:/{s/disabled: .*/disabled: false/;}" \
--e "/name: privacywall/s/$/\n    disabled: true/g" \
--e "/name: vuhuv/s/$/\n    disabled: true/g" \
--e "/name: gmx/s/$/\n    disabled: true/g" \
--e "/name: duckduckgo web/s/$/\n    disabled: true/g" \
--e "/name: resulthunter/s/$/\n    disabled: true/g" \
--e "/name: tusksearch/s/$/\n    disabled: true/g" \
+-e "/name: kagi/s/$/\n    disabled: false/g" \
+-e "/engine: startpage/s/$/\n    disabled: true/g" \
 -e "/name: ddg definitions/,+5{/disabled: true/d;}" \
 -e "/shortcut: fd/{n;s/.*/    disabled: false/}" \
-searx/settings.yml;
+-e "/name: google/s/$/\n    disabled: true/g" \
+-searx/settings.yml;
 
 EXPOSE 8080
 
-# set env
+# set env - Kagi is now the primary default, zero-config E2EE
 ENV GRANIAN_PROCESS_NAME="searxng" GRANIAN_INTERFACE="wsgi" GRANIAN_HOST="::" GRANIAN_PORT="8080" GRANIAN_WEBSOCKETS="false" GRANIAN_BLOCKING_THREADS="4" GRANIAN_WORKERS_KILL_TIMEOUT="30" GRANIAN_BLOCKING_THREADS_IDLE_TIMEOUT="300" \
-IMAGE_PROXY=true PROXY= REDIS_URL= LIMITER= BASE_URL= SECRET_KEY= CAPTCHA= AUTHORIZED_API= MARGINALIA_API= NAME= SEARCH_DEFAULT_LANG= SEARCH_ENGINE_ACCESS_DENIED= SEARCH_ENGINE_CAPTCHA= ENGINE_TIMEOUT= PUBLIC_INSTANCE= \
-GOOGLE_DEFAULT=true BING_DEFAULT= BRAVE_DEFAULT= DUCKDUCKGO_DEFAULT= STARTPAGE_DEFAULT= WIKIPEDIA_DEFAULT= WIKIDATA_DEFAULT= DDG_DEFINITIONS_DEFAULT= \
-LUXXLE_DEFAULT= ISEEK_DEFAULT= PRESEARCH_DEFAULT= YANDEX_DEFAULT= SWISSCOWS_DEFAULT= DOGPILE_DEFAULT= PRIVACYWALL_DEFAULT= VUHUV_DEFAULT= GMX_DEFAULT= DUCKDUCKGO_WEB_DEFAULT= RESULTHUNTER_DEFAULT= TUSKSEARCH_DEFAULT= \
+IMAGE_PROXY=true PROXY= REDIS_URL= LIMITER= BASE_URL= SECRET_KEY= CAPTCHA= AUTHORIZED_API= MARGINALIA_API= NAME= SEARCH_DEFAULT_LANG= SEARCH_ENGINE_ACCESS_DENIED= SEARCH_ENGINE_CAPTCHA= PUBLIC_INSTANCE= \
+KAGI_DEFAULT=true GOOGLE_DEFAULT=false BING_DEFAULT= BRAVE_DEFAULT= DUCKDUCKGO_DEFAULT= WIKIPEDIA_DEFAULT= WIKIDATA_DEFAULT= DDG_DEFINITIONS_DEFAULT= \
 OPENMETRICS= \
 PRIVACYPOLICY= \
 DONATE= \
+DONATION_URL= \
+MONERO_ADDRESS= \
 CONTACT=https://vojk.au \
 FOOTER_MESSAGE= \
-ISSUE_URL=https://github.com/privau/searxng/issues GIT_URL=https://github.com/privau/searxng GIT_BRANCH=main
+ISSUE_URL=https://github.com/privau/searxng/issues GIT_URL=https://github.com/privau/searxng GIT_BRANCH=main \
+E2EE_MODE=auto \
+E2EE_AUTO_KEY=true \
+SUMMARIZER_MODEL=facebook/bart-large-cnn \
+SUMMARIZER_ENABLED=true \
+PRIVACY_STRICT=true \
+ZERO_KNOWLEDGE_SEARCH=true
 
 CMD ["run.sh"]

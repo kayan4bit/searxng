@@ -1,0 +1,120 @@
+// Tokyo Night Theme
+// A dark theme with vibrant neon accents inspired by Tokyo nightlife
+
+@theme: 'tokyo-night';
+
+@bg: #1a1b26;
+@bg-soft: #24283b;
+@bg-highlight: #414868;
+
+@text: #c0caf5;
+@text-sub: #9aa5ce;
+@text-muted: #565f89;
+
+@blue: #7aa2f7;
+@cyan: #7dcfff;
+@green: #9ece6a;
+@yellow: #e0af68;
+@orange: #ff9e64;
+@magenta: #bb9af7;
+@pink: #f7768e;
+@purple: #7aa2f7;
+@red: #f7768e;
+
+// Result items
+.result {
+    background: @bg-soft;
+    border: 1px solid @bg-highlight;
+    
+    &:hover {
+        background: @bg-highlight;
+        border-color: @cyan;
+    }
+    
+    h3 a {
+        color: @cyan;
+    }
+    
+    .content {
+        color: @text-sub;
+    }
+    
+    .url {
+        color: @green;
+    }
+}
+
+// Search bar
+#search_form {
+    input[type="text"] {
+        background: @bg-soft;
+        color: @text;
+        border-color: @bg-highlight;
+        
+        &:focus {
+            border-color: @cyan;
+            box-shadow: 0 0 10px rgba(122, 207, 255, 0.3);
+        }
+    }
+    
+    button[type="submit"] {
+        background: linear-gradient(135deg, @cyan, @blue);
+        color: @bg;
+    }
+}
+
+// General body
+body {
+    background: @bg;
+    color: @text;
+}
+
+a {
+    color: @cyan;
+}
+
+// Sidebar
+.sidebar {
+    background: @bg-soft;
+    
+    .engine {
+        &:hover {
+            background: @bg-highlight;
+        }
+        
+        &.disabled {
+            opacity: 0.5;
+        }
+    }
+}
+
+// Checkbox/Radio
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: @cyan;
+}
+
+// Select dropdowns
+select {
+    background: @bg-soft;
+    color: @text;
+    border-color: @bg-highlight;
+}
+
+// Buttons
+button,
+.btn {
+    background: @bg-highlight;
+    color: @text;
+    border-color: @bg-highlight;
+    
+    &:hover {
+        background: @cyan;
+        color: @bg;
+    }
+    
+    &.btn-primary {
+        background: linear-gradient(135deg, @cyan, @blue);
+        color: @bg;
+    }
+}
