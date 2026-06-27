@@ -99,7 +99,11 @@ COPY --chown=searxng:searxng ./src/engines/kagi.py searx/engines/kagi.py
 # Privacy, Zero-Knowledge E2EE, and AI modules
 COPY --chown=searxng:searxng ./src/search/privacy_e2ee.py searx/search/privacy_e2ee.py
 COPY --chown=searxng:searxng ./src/search/privacy_selector.py searx/search/privacy_selector.py
+COPY --chown=searxng:searxng ./src/search/premium_security.py searx/search/premium_security.py
 COPY --chown=searxng:searxng ./src/search/ai_summarize.py searx/search/ai_summarize.py
+
+# Premium themes
+COPY --chown=searxng:searxng ./src/less/themes/ searx/less/themes/
 
 # Settings patch script (replaces complex sed commands)
 COPY --chown=searxng:searxng ./src/settings_patch.py searx/settings_patch.py

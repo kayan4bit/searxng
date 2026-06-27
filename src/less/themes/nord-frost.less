@@ -1,0 +1,189 @@
+// Nord Frost Theme
+// A clean, icy blue theme inspired by Arctic colors
+
+@theme: 'nord-frost';
+
+@nord0: #2e3440;
+@nord1: #3b4252;
+@nord2: #434c5e;
+@nord3: #4c566a;
+@nord4: #d8dee9;
+@nord5: #e5e9f0;
+@nord6: #eceff4;
+
+@frost1: #8fbcbb;
+@frost2: #88c0d0;
+@frost3: #81a1c1;
+@frost4: #5e81ac;
+
+@aurora1: #bf616a;
+@aurora2: #d08770;
+@aurora3: #ebcb8b;
+@aurora4: #a3be8c;
+@aurora5: #b48ead;
+
+@bg: @nord0;
+@bg-soft: @nord1;
+@bg-highlight: @nord2;
+
+@text: @nord4;
+@text-sub: @nord3;
+@text-muted: @nord3;
+
+@accent: @frost3;
+@accent-hover: @frost4;
+@link: @frost2;
+
+@border: @nord2;
+@border-focus: @frost3;
+
+// Result items
+.result {
+    background: @bg-soft;
+    border: 1px solid @border;
+    border-radius: 6px;
+    
+    &:hover {
+        background: @bg-highlight;
+        border-color: @accent;
+        box-shadow: 0 2px 8px rgba(94, 129, 172, 0.2);
+    }
+    
+    h3 a {
+        color: @accent;
+        
+        &:hover {
+            color: @accent-hover;
+        }
+    }
+    
+    .content {
+        color: @text-sub;
+    }
+    
+    .url {
+        color: @frost1;
+    }
+    
+    .highlight {
+        background: rgba(235, 203, 139, 0.2);
+        color: @aurora3;
+    }
+}
+
+// Search bar
+#search_form {
+    input[type="text"] {
+        background: @bg-soft;
+        color: @text;
+        border: 2px solid @border;
+        border-radius: 8px;
+        
+        &:focus {
+            border-color: @accent;
+            box-shadow: 0 0 0 3px rgba(129, 161, 193, 0.2);
+        }
+    }
+    
+    button[type="submit"] {
+        background: linear-gradient(135deg, @frost4, @frost3);
+        color: @nord6;
+        border-radius: 8px;
+        
+        &:hover {
+            background: linear-gradient(135deg, @accent, @frost2);
+        }
+    }
+}
+
+// General body
+body {
+    background: @bg;
+    color: @text;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+a {
+    color: @link;
+    
+    &:hover {
+        color: @accent-hover;
+    }
+}
+
+// Sidebar
+.sidebar {
+    background: @bg-soft;
+    border-radius: 8px;
+    
+    .engine {
+        border-radius: 4px;
+        
+        &:hover {
+            background: @bg-highlight;
+        }
+        
+        &.active {
+            background: @frost4;
+            color: @nord6;
+        }
+    }
+}
+
+// Checkbox/Radio
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: @accent;
+}
+
+// Select dropdowns
+select {
+    background: @bg-soft;
+    color: @text;
+    border: 1px solid @border;
+    border-radius: 4px;
+    
+    &:focus {
+        border-color: @accent;
+    }
+}
+
+// Buttons
+button,
+.btn {
+    background: @bg-highlight;
+    color: @text;
+    border: 1px solid @border;
+    border-radius: 6px;
+    
+    &:hover {
+        background: @accent;
+        color: @nord6;
+        border-color: @accent;
+    }
+}
+
+// Results count
+.results_count {
+    color: @text-muted;
+}
+
+// Loading
+.loading {
+    color: @frost2;
+}
+
+// Autocomplete
+.autocomplete {
+    background: @bg-soft;
+    border: 1px solid @border;
+    border-radius: 6px;
+    
+    .item {
+        &:hover,
+        &.selected {
+            background: @bg-highlight;
+            color: @accent;
+        }
+    }
+}

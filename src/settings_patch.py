@@ -26,6 +26,8 @@ def patch_settings():
     
     original = content
     
+    print(f"Patching settings.yml (length: {len(content)})")
+    
     # Basic settings replacements
     replacements = [
         # General settings
@@ -34,7 +36,7 @@ def patch_settings():
         ('autocomplete_min: 4', 'autocomplete_min: 0'),
         ('favicon_resolver: ""', 'favicon_resolver: "google"'),
         ('port: 8888', 'port: 8080'),
-        ('simple_style: auto', 'simple_style: kagi'),
+        ('simple_style: auto', 'simple_style: dracula-pro'),
         ('# max_request_timeout: 10.0', 'max_request_timeout: 5.0'),
         ('static_use_hash: false', 'static_use_hash: true'),
         ('use_mobile_ui: false', 'use_mobile_ui: true'),
@@ -44,108 +46,88 @@ def patch_settings():
     ]
     
     for old, new in replacements:
-        content = content.replace(old, new)
-    
-    # Remove unwanted settings (lines)
-    lines_to_remove = [
-        'X-Content-Type-Options: nosniff',
-        'X-XSS-Protection: 1; mode=block',
-        'X-Robots-Tag: noindex, nofollow',
-        'Referrer-Policy: no-referrer',
-    ]
-    
-    for line in lines_to_remove:
-        content = content.replace(line + '\n', '')
-        content = content.replace(line, '')
-    
-    # Remove news, files, social media sections
-    content = re.sub(r'^news:.*?(?=\n\w|$)', '', content, flags=re.MULTILINE | re.DOTALL)
-    content = re.sub(r'^files:.*?(?=\n\w|$)', '', content, flags=re.MULTILINE | re.DOTALL)
-    content = re.sub(r'^social media:.*?(?=\n\w|$)', '', content, flags=re.MULTILINE | re.DOTALL)
+        if old in content:
+            content = content.replace(old, new)
+            print(f"Replaced: {old[:30]}...")
     
     # Fix default_lang
-    content = re.sub(r'default_lang: ""', 'default_lang: en', content)
+    if 'default_lang: ""' in content:
+        content = re.sub(r'default_lang: ""', 'default_lang: en', content)
+        print("Set default_lang to en")
     
     # Enable infinite scroll
-    content = re.sub(r'infinite_scroll:.*?active: false', 'infinite_scroll:\n    active: true', content, flags=re.DOTALL)
+    if 'infinite_scroll:' in content:
+        content = re.sub(r'infinite_scroll:.*?active: false', 'infinite_scroll:\n    active: true', content, flags=re.DOTALL)
+        print("Enabled infinite scroll")
     
-    # Remove standalone "disabled: false" lines (cleanup)
-    content = re.sub(r'^\s*disabled: false\s*$\n?', '', content, flags=re.MULTILINE)
+    # ========== CRITICAL: Add Kagi engine ==========
+    if 'name: kagi' not in content:
+        # Kagi engine definition with high priority
+        kagi_engine = '''
+  - name: kagi
+    engine: kagi
+    shortcut: kg
+    disabled: false
+    weight: 100
+    categories:
+      - general
+      - web
+'''
+        
+        # Try to find a good place to insert - look for first engine block
+        # Pattern: looks for "engines:" section and inserts after it
+        match = re.search(r'(engines:\s*\n)', content)
+        if match:
+            insert_pos = match.end()
+            content = content[:insert_pos] + kagi_engine + content[insert_pos:]
+            print("✅ Added Kagi engine after 'engines:' section")
+        else:
+            # Fallback: insert before first "- name:" block
+            match = re.search(r'(\n\s+-\s+name:\s+)', content)
+            if match:
+                content = content[:match.start()] + kagi_engine + content[match.start():]
+                print("✅ Added Kagi engine before first engine")
+            else:
+                print("❌ Could not find insertion point for Kagi")
+    else:
+        print("Kagi engine already exists")
     
-    # Engines to disable
-    disabled_engines = [
-        'aol', 'aol images', 'aol videos',
-        'karmasearch', 'karmasearch images', 'karmasearch videos', 'karmasearch news',
-        'wikispecies', 'wikinews', 'wikibooks', 'wikivoyage', 'wikiversity',
-        'wikiquote', 'wikisource', 'wikicommons.images', 'wikicommons.videos',
-        'pinterest', 'piped', 'piped.music', 'public domain image archive',
-        'bandcamp', 'radio browser', 'mixcloud', 'hoogle',
-        'qwant', 'btdigg', 'lucide', 'devicons', 'pexels',
-        'docker hub', 'github', 'semantic scholar',
-        'openairedatasets', 'sepiasearch', 'dailymotion', 'deviantart',
-        'vimeo', 'openairepublications', 'library of congress', 'dictzone',
-        'baidu', 'lingva', 'genius', 'wallhaven', 'artic',
-        'flickr', 'unsplash', 'gentoo', 'openverse',
-        'google videos', 'yahoo news', 'bing news', 'tineye',
-        'startpage', 'google',
-    ]
-    
-    # Add disabled: true after engine names
-    for engine in disabled_engines:
-        pattern = rf'(name: {re.escape(engine)}\n)(?!    disabled:)'
-        replacement = r'\1    disabled: true\n'
-        content = re.sub(pattern, replacement, content)
-    
-    # Add Kagi engine if not present (this is the key fix!)
-    kagi_engine = '''  - name: kagi
+    # ========== Also add kagi to searxng_engines.yml if it exists ==========
+    try:
+        with open('/usr/local/searxng/searxng_data/engines/engines.yml', 'r') as f:
+            engines_content = f.read()
+        if 'name: kagi' not in engines_content:
+            engines_content += '''
+  - name: kagi
     engine: kagi
     shortcut: kg
     disabled: false
 '''
+            with open('/usr/local/searxng/searxng_data/engines/engines.yml', 'w') as f:
+                f.write(engines_content)
+            print("Added Kagi to engines.yml")
+    except FileNotFoundError:
+        pass  # Not critical
     
-    # Check if kagi already exists
-    if 'name: kagi' not in content:
-        # Find where to insert (before google or after other engines)
-        # Look for first engine definition
-        match = re.search(r'(\n  - name: \w+)', content)
-        if match:
-            # Insert kagi at the beginning of engines list
-            content = content.replace(match.group(1), kagi_engine + match.group(1), 1)
-        else:
-            # Fallback: insert before first "- name:"
-            content = re.sub(r'(\n- name: )', '\n' + kagi_engine + r'\1', content, count=1)
-        print("Added Kagi engine to settings.yml")
-    
-    # Add privacy mode settings if not present
-    privacy_settings = '''
-# Privacy Mode Settings
-# Available modes: speed, balanced, privacy
-privacy_mode_default: balanced
-privacy_mode_selector_enabled: true
-'''
+    # Add privacy settings
     if 'privacy_mode_default' not in content:
-        # Insert after general settings
         match = re.search(r'(outgoing:)', content)
         if match:
+            privacy_settings = '''
+# Privacy Mode Settings
+privacy_mode_default: balanced
+privacy_mode_selector_enabled: true
+zero_logs_mode: true
+secure_request_validation: true
+rate_limit_per_minute: 100
+'''
             content = content.replace(match.group(1), privacy_settings + '\n' + match.group(1), 1)
-        print("Added privacy mode settings")
-    
-    # Enable currency engine if it exists
-    if 'name: currency' in content:
-        pattern = r'(name: currency\n)(?!    disabled:)'
-        replacement = r'\1    disabled: false\n'
-        content = re.sub(pattern, replacement, content)
-    
-    # Enable file search by shortcut fd
-    content = re.sub(r'(shortcut: fd.*?\n)(    disabled: true)', r'\1    disabled: false', content, flags=re.DOTALL)
-    
-    # Enable DDG definitions
-    content = re.sub(r'(name: ddg definitions.*?\n)(    disabled: true)', r'\1    disabled: false', content, flags=re.DOTALL)
+            print("Added privacy settings")
     
     with open(settings_file, 'w') as f:
         f.write(content)
     
-    print(f"Settings patched successfully")
+    print(f"✅ Settings patched successfully")
     return True
 
 
