@@ -1,0 +1,119 @@
+// Solarized Theme
+// A carefully designed syntax highlighting colorscheme
+
+@theme: 'solarized';
+
+@base03: #002b36;
+@base02: #073642;
+@base01: #586e75;
+@base00: #657b83;
+@base0: #839496;
+@base1: #93a1a1;
+@base2: #eee8d5;
+@base3: #fdf6e3;
+
+@yellow: #b58900;
+@orange: #cb4b16;
+@red: #dc322f;
+@magenta: #d33682;
+@violet: #6c71c4;
+@blue: #268bd2;
+@cyan: #2aa198;
+@green: #859900;
+
+// Use dark variant by default
+@bg: @base03;
+@bg-soft: @base02;
+@bg-highlight: @base01;
+
+@text: @base1;
+@text-sub: @base0;
+@text-muted: @base01;
+
+// Result items
+.result {
+    background: @bg-soft;
+    border: 1px solid @bg-highlight;
+    
+    &:hover {
+        background: @bg-highlight;
+        border-color: @blue;
+    }
+    
+    h3 a {
+        color: @blue;
+    }
+    
+    .content {
+        color: @text-sub;
+    }
+    
+    .url {
+        color: @cyan;
+    }
+}
+
+// Search bar
+#search_form {
+    input[type="text"] {
+        background: @bg-soft;
+        color: @text;
+        border-color: @bg-highlight;
+        
+        &:focus {
+            border-color: @blue;
+        }
+    }
+    
+    button[type="submit"] {
+        background: @blue;
+        color: @bg;
+    }
+}
+
+// General body
+body {
+    background: @bg;
+    color: @text;
+}
+
+a {
+    color: @blue;
+}
+
+// Sidebar
+.sidebar {
+    background: @bg-soft;
+    
+    .engine {
+        &:hover {
+            background: @bg-highlight;
+        }
+    }
+}
+
+// Checkbox/Radio
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: @blue;
+}
+
+// Select dropdowns
+select {
+    background: @bg-soft;
+    color: @text;
+    border-color: @bg-highlight;
+}
+
+// Buttons
+button,
+.btn {
+    background: @bg-highlight;
+    color: @text;
+    border-color: @bg-highlight;
+    
+    &:hover {
+        background: @blue;
+        color: @bg;
+    }
+}

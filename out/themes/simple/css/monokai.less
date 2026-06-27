@@ -1,0 +1,108 @@
+// Monokai Theme
+// Classic editor color scheme for code and clarity
+
+@theme: 'monokai';
+
+@bg: #272822;
+@bg-alt: #1e1f1c;
+@bg-highlight: #3e3d32;
+
+@text: #f8f8f2;
+@text-muted: #75715e;
+@text-sub: #a6e22e;
+
+@yellow: #e6db74;
+@orange: #fd971f;
+@red: #f92672;
+@magenta: #f92672;
+@purple: #ae81ff;
+@blue: #66d9ef;
+@cyan: #a1efe4;
+@green: #a6e22e;
+
+// Result items
+.result {
+    background: @bg-alt;
+    border: 1px solid @bg-highlight;
+    
+    &:hover {
+        background: @bg-highlight;
+        border-color: @cyan;
+    }
+    
+    h3 a {
+        color: @cyan;
+    }
+    
+    .content {
+        color: @text;
+    }
+    
+    .url {
+        color: @green;
+    }
+}
+
+// Search bar
+#search_form {
+    input[type="text"] {
+        background: @bg-alt;
+        color: @text;
+        border-color: @bg-highlight;
+        
+        &:focus {
+            border-color: @cyan;
+        }
+    }
+    
+    button[type="submit"] {
+        background: @green;
+        color: @bg;
+    }
+}
+
+// General body
+body {
+    background: @bg;
+    color: @text;
+}
+
+a {
+    color: @cyan;
+}
+
+// Sidebar
+.sidebar {
+    background: @bg-alt;
+    
+    .engine {
+        &:hover {
+            background: @bg-highlight;
+        }
+    }
+}
+
+// Checkbox/Radio
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: @green;
+}
+
+// Select dropdowns
+select {
+    background: @bg-alt;
+    color: @text;
+    border-color: @bg-highlight;
+}
+
+// Buttons
+button,
+.btn {
+    background: @bg-highlight;
+    color: @text;
+    
+    &:hover {
+        background: @green;
+        color: @bg;
+    }
+}
