@@ -56,17 +56,13 @@ Use the [Looking Glass](https://lg.as44354.net/) to find the closest one to you.
 
 * ```NAME``` : sets the name of the instance, displayed as the url title - worth changing this as users can't add two instances named the same in Firefox (e.g. `PrivAU`)
 
-* ```PRIVACYPOLICY``` : sets the location of privacy policy of the instance (for example `https://example.org/privacy-policy`)
+* ```PRIVACYPOLICY``` : sets the location of the privacy policy of the instance (for example `https://example.org/privacy-policy`)
 
 * ```CONTACT``` : sets the location for users to contact the instance maintainer (for example `mailto:user@example.org`)
 
 * ```ISSUE_URL``` : set the location for users to report issues to (for example `https://github.com/example/searxng/issues` !Without a trailing /)
 
-* ```DONATE``` : enable the donation page and footer link. Set to `true` to enable (Default: `false`)
-
-* ```DONATION_URL``` : sets kofi or donation link displayed on the donation page (for example `https://ko-fi.com/privau`)
-
-* ```MONERO_ADDRESS``` : sets the Monero address displayed on the donation page.
+* ```DONATE``` : sets the location of the donation page of the instance (Default: unset)
 
 * ```GIT_URL``` : sets the location of the Git repository. (for example `https://github.com/privau/searxng`)
 
@@ -75,6 +71,8 @@ Use the [Looking Glass](https://lg.as44354.net/) to find the closest one to you.
 * ```SEARCH_ENGINE_ACCESS_DENIED``` : sets the suspension timeout in seconds if a search engine throws a SEARCH_ENGINE_ACCESS_DENIED exception (Default: `60`)
 
 * ```SEARCH_ENGINE_CAPTCHA``` : sets the suspension timeout in seconds if a search engine throws a SEARCH_ENGINE_CAPTCHA exception (Default: `60`)
+
+* ```ENGINE_TIMEOUT``` : sets the default engine request timeout and hard cap in seconds (Default: `2`)
 
 * ```PUBLIC_INSTANCE``` : enables features designed for public instances. Forces image_proxy and limiter set to enabled. Requires redis/valkey.
 
@@ -94,11 +92,37 @@ Use the [Looking Glass](https://lg.as44354.net/) to find the closest one to you.
 
 * ```DUCKDUCKGO_DEFAULT``` : enable the DuckDuckGo search engine by default (Default: `false`)
 
+* ```STARTPAGE_DEFAULT``` : enable the Startpage search engine by default (Default: `false`)
+
 * ```WIKIPEDIA_DEFAULT``` : enable the Wikipedia engine by default (Default: `false`)
 
 * ```WIKIDATA_DEFAULT``` : enable the Wikidata engine by default (Default: `false`)
 
 * ```DDG_DEFINITIONS_DEFAULT``` : enable the DuckDuckGo Definitions engine by default (Default: `false`)
+
+* ```LUXXLE_DEFAULT``` : enable the Luxxle search engine by default (Default: `false`)
+
+* ```ISEEK_DEFAULT``` : enable the iSeek search engine by default (Default: `false`)
+
+* ```PRESEARCH_DEFAULT``` : enable the Presearch search engine by default (Default: `false`)
+
+* ```YANDEX_DEFAULT``` : enable the Yandex search engine by default (Default: `false`)
+
+* ```SWISSCOWS_DEFAULT``` : enable the Swisscows search engine by default (Default: `false`)
+
+* ```DOGPILE_DEFAULT``` : enable the Dogpile search engine by default (Default: `false`)
+
+* ```PRIVACYWALL_DEFAULT``` : enable the PrivacyWall search engine by default (Default: `false`)
+
+* ```VUHUV_DEFAULT``` : enable the Vuhuv search engine by default (Default: `false`)
+
+* ```GMX_DEFAULT``` : enable the GMX search engine by default (Default: `false`)
+
+* ```DUCKDUCKGO_WEB_DEFAULT``` : enable the DuckDuckGo Web search engine by default (Default: `false`)
+
+* ```RESULTHUNTER_DEFAULT``` : enable the ResultHunter search engine by default (Default: `false`)
+
+* ```TUSKSEARCH_DEFAULT``` : enable the Tusksearch search engine by default (Default: `false`)
 
 * ```SEARCH_DEFAULT_LANG``` : sets the default search language (for example `en`, Default: `auto`)
 

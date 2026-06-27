@@ -46,9 +46,6 @@ fi
 if [ ! -z "${PRIVACYPOLICY}" ]; then
     sed -i -e "s+privacypolicy_url: false+privacypolicy_url: ${PRIVACYPOLICY}+g" \
     searx/settings.yml;
-else # set to 'privacy'
-    sed -i -e "s+privacypolicy_url: false+privacypolicy_url: privacy+g" \
-    searx/settings.yml;
 fi
 
 # set contact url
@@ -100,6 +97,14 @@ else # set to 60 seconds
     searx/settings.yml;
 fi
 
+# set engine request timeout (default: 2 seconds)
+if [ -z "${ENGINE_TIMEOUT}" ]; then
+    ENGINE_TIMEOUT=2
+fi
+sed -i -e "s/  request_timeout: .*/  request_timeout: ${ENGINE_TIMEOUT}/" \
+-e "s/  #* *max_request_timeout: .*/  max_request_timeout: ${ENGINE_TIMEOUT}/" \
+searx/settings.yml;
+
 # enable public_instance mode
 if [ ! -z "${PUBLIC_INSTANCE}" ]; then
     sed -i -e "/public_instance:/s/false/true/g" \
@@ -121,15 +126,6 @@ if [ ! -z "${OPENMETRICS}" ]; then
     searx/settings.yml;
 fi
 
-# set GOOGLE_DEFAULT if exists
-if [ ! -z "${GOOGLE_DEFAULT}" ]; then
-    sed -i -e "/name: google/s/$/\n    disabled: false/g" \
-    searx/settings.yml;
-else # set to disabled
-    sed -i -e "/name: google/s/$/\n    disabled: true/g" \
-    searx/settings.yml;
-fi
-
 # set BING_DEFAULT if exists
 if [ ! -z "${BING_DEFAULT}" ]; then
     sed -i \
@@ -147,50 +143,41 @@ else # set to disabled
     searx/settings.yml;
 fi
 
-# set BRAVE_DEFAULT if exists
-if [ ! -z "${BRAVE_DEFAULT}" ]; then
-    sed -i -e "/name: brave/s/$/\n    disabled: false/g" \
-    searx/settings.yml;
-else # set to disabled
-    sed -i -e "/name: brave/s/$/\n    disabled: true/g" \
-    searx/settings.yml;
-fi
+# toggle engines via *_DEFAULT env vars
+set_engine_default() {
+    engine_name="$1"
+    env_value="$2"
 
-# set DUCKDUCKGO_DEFAULT if exists
-if [ ! -z "${DUCKDUCKGO_DEFAULT}" ]; then
-    sed -i -e "/name: duckduckgo/s/$/\n    disabled: false/g" \
-    searx/settings.yml;
-else # set to disabled
-    sed -i -e "/name: duckduckgo/s/$/\n    disabled: true/g" \
-    searx/settings.yml;
-fi
+    if [ ! -z "$env_value" ]; then
+        disabled="false"
+    else
+        disabled="true"
+    fi
 
-# set WIKIPEDIA_DEFAULT if exists
-if [ ! -z "${WIKIPEDIA_DEFAULT}" ]; then
-    sed -i -e "/name: wikipedia/s/$/\n    disabled: false/g" \
+    sed -i -e "/- name: ${engine_name}\$/,/^  - name: /s/disabled: .*/disabled: ${disabled}/" \
+    -e "/- name: ${engine_name}\$/,/^  - name: /{/inactive:/d;}" \
     searx/settings.yml;
-else # set to disabled
-    sed -i -e "/name: wikipedia/s/$/\n    disabled: true/g" \
-    searx/settings.yml;
-fi
+}
 
-# set WIKIDATA_DEFAULT if exists
-if [ ! -z "${WIKIDATA_DEFAULT}" ]; then
-    sed -i -e "/name: wikidata/s/$/\n    disabled: false/g" \
-    searx/settings.yml;
-else # set to disabled
-    sed -i -e "/name: wikidata/s/$/\n    disabled: true/g" \
-    searx/settings.yml;
-fi
-
-# set DDG_DEFINITIONS_DEFAULT if exists
-if [ ! -z "${DDG_DEFINITIONS_DEFAULT}" ]; then
-    sed -i -e "/name: ddg definitions/s/$/\n    disabled: false/g" \
-    searx/settings.yml;
-else # set to disabled
-    sed -i -e "/name: ddg definitions/s/$/\n    disabled: true/g" \
-    searx/settings.yml;
-fi
+set_engine_default google "${GOOGLE_DEFAULT}"
+set_engine_default startpage "${STARTPAGE_DEFAULT}"
+set_engine_default brave "${BRAVE_DEFAULT}"
+set_engine_default duckduckgo "${DUCKDUCKGO_DEFAULT}"
+set_engine_default wikipedia "${WIKIPEDIA_DEFAULT}"
+set_engine_default wikidata "${WIKIDATA_DEFAULT}"
+set_engine_default "ddg definitions" "${DDG_DEFINITIONS_DEFAULT}"
+set_engine_default luxxle "${LUXXLE_DEFAULT}"
+set_engine_default iseek "${ISEEK_DEFAULT}"
+set_engine_default swisscows "${SWISSCOWS_DEFAULT}"
+set_engine_default presearch "${PRESEARCH_DEFAULT}"
+set_engine_default yandex "${YANDEX_DEFAULT}"
+set_engine_default dogpile "${DOGPILE_DEFAULT}"
+set_engine_default privacywall "${PRIVACYWALL_DEFAULT}"
+set_engine_default vuhuv "${VUHUV_DEFAULT}"
+set_engine_default gmx "${GMX_DEFAULT}"
+set_engine_default "duckduckgo web" "${DUCKDUCKGO_WEB_DEFAULT}"
+set_engine_default resulthunter "${RESULTHUNTER_DEFAULT}"
+set_engine_default tusksearch "${TUSKSEARCH_DEFAULT}"
 
 # set Marginalia API key
 if [ ! -z "${MARGINALIA_API}" ]; then
@@ -205,21 +192,9 @@ if [ ! -z "${FOOTER_MESSAGE}" ]; then
     searx/templates/simple/base.html
 fi
 
-# enable donation page (footer link to /donate)
-if [ "${DONATE}" = "true" ]; then
-    sed -i -e "s+donation_url: false+donation_url: donate+g" searx/settings.yml;
-fi
-
-# populate donation page URL placeholders
-if [ ! -z "${DONATION_URL}" ]; then
-    donation_display=$(echo "${DONATION_URL}" | sed 's|^https\?://||')
-    sed -i -e "s|__DONATION_URL_DISPLAY__|${donation_display}|g" -e "s|__DONATION_URL__|${DONATION_URL}|g" searx/templates/simple/donation.html;
-fi
-if [ ! -z "${MONERO_ADDRESS}" ]; then
-    case "${MONERO_ADDRESS}" in monero:*) monero_uri="${MONERO_ADDRESS}" ;; *) monero_uri="monero:${MONERO_ADDRESS}" ;; esac
-    case "${monero_uri}" in *\?*) ;; *) monero_uri="${monero_uri}?tx_description=PrivAU+Donation" ;; esac
-    monero_display=$(echo "${MONERO_ADDRESS}" | sed 's|^monero:||')
-    sed -i -e "s|__MONERO_URI__|${monero_uri}|g" -e "s|__MONERO_ADDRESS__|${monero_display}|g" searx/templates/simple/donation.html;
+# set donation url
+if [ ! -z "${DONATE}" ]; then
+    sed -i -e "s+donation_url: false+donation_url: ${DONATE}+g" searx/settings.yml;
 fi
 
 exec /usr/local/searxng/venv/bin/granian searx.privau_wsgi:app
