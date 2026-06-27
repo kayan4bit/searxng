@@ -9,3 +9,17 @@ apply_supplemental_timeout()
 from searx.webapp import app  # noqa: F401
 
 apply_google_autocomplete_icons(app)
+
+# Apply privacy and E2EE patches
+try:
+    from searx.search.privacy_e2ee import apply_privacy_patches
+    apply_privacy_patches(app)
+except ImportError:
+    pass
+
+# Apply AI summarization routes
+try:
+    from searx.search.ai_summarize import apply_summarization_routes
+    apply_summarization_routes(app)
+except ImportError:
+    pass

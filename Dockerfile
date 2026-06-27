@@ -90,6 +90,15 @@ COPY --chown=searxng:searxng ./src/search/supplemental_timeout.py searx/search/s
 COPY --chown=searxng:searxng ./src/search/google_autocomplete_icons.py searx/search/google_autocomplete_icons.py
 COPY --chown=searxng:searxng ./src/search/privau_wsgi.py searx/privau_wsgi.py
 
+# Kagi search engine (proxied web scraping without API key)
+COPY --chown=searxng:searxng ./src/engines/kagi.py searx/engines/kagi.py
+
+# Privacy and E2EE module
+COPY --chown=searxng:searxng ./src/search/privacy_e2ee.py searx/search/privacy_e2ee.py
+
+# AI Summarization module
+COPY --chown=searxng:searxng ./src/search/ai_summarize.py searx/search/ai_summarize.py
+
 # fix opensearch autocompleter (force method of autocompleter to use GET reuqests)
 RUN sed -i '/{% if autocomplete %}/,/{% endif %}/s|method="{{ opensearch_method }}"|method="GET"|g' searx/templates/simple/opensearch.xml
 
@@ -170,6 +179,7 @@ RUN sed -i -e "/safe_search:/s/0/1/g" \
 -e "/name: yahoo news/s/$/\n    disabled: true/g" \
 -e "/name: bing news/s/$/\n    disabled: true/g" \
 -e "/name: tineye/s/$/\n    disabled: true/g" \
+-e "/name: kagi/s/$/\n    disabled: false/g" \
 -e "/engine: startpage/s/$/\n    disabled: true/g" \
 -e "/name: ddg definitions/,+5{/disabled: true/d;}" \
 -e "/shortcut: fd/{n;s/.*/    disabled: false/}" \
@@ -180,7 +190,7 @@ EXPOSE 8080
 # set env
 ENV GRANIAN_PROCESS_NAME="searxng" GRANIAN_INTERFACE="wsgi" GRANIAN_HOST="::" GRANIAN_PORT="8080" GRANIAN_WEBSOCKETS="false" GRANIAN_BLOCKING_THREADS="4" GRANIAN_WORKERS_KILL_TIMEOUT="30" GRANIAN_BLOCKING_THREADS_IDLE_TIMEOUT="300" \
 IMAGE_PROXY=true PROXY= REDIS_URL= LIMITER= BASE_URL= SECRET_KEY= CAPTCHA= AUTHORIZED_API= MARGINALIA_API= NAME= SEARCH_DEFAULT_LANG= SEARCH_ENGINE_ACCESS_DENIED= SEARCH_ENGINE_CAPTCHA= PUBLIC_INSTANCE= \
-GOOGLE_DEFAULT=true BING_DEFAULT= BRAVE_DEFAULT= DUCKDUCKGO_DEFAULT= WIKIPEDIA_DEFAULT= WIKIDATA_DEFAULT= DDG_DEFINITIONS_DEFAULT= \
+GOOGLE_DEFAULT=true BING_DEFAULT= BRAVE_DEFAULT= DUCKDUCKGO_DEFAULT= WIKIPEDIA_DEFAULT= WIKIDATA_DEFAULT= DDG_DEFINITIONS_DEFAULT= KAGI_DEFAULT=true \
 OPENMETRICS= \
 PRIVACYPOLICY= \
 DONATE= \
@@ -188,6 +198,8 @@ DONATION_URL= \
 MONERO_ADDRESS= \
 CONTACT=https://vojk.au \
 FOOTER_MESSAGE= \
-ISSUE_URL=https://github.com/privau/searxng/issues GIT_URL=https://github.com/privau/searxng GIT_BRANCH=main
+ISSUE_URL=https://github.com/privau/searxng/issues GIT_URL=https://github.com/privau/searxng GIT_BRANCH=main \
+E2EE_SEED= \
+SUMMARIZER_MODEL=facebook/bart-large-cnn
 
 CMD ["run.sh"]
