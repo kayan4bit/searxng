@@ -136,8 +136,11 @@ COPY --chown=searxng:searxng ./src/search/ai_summary.py searx/search/ai_summary.
 COPY --chown=searxng:searxng ./src/patch_templates.py /tmp/patch_templates.py
 RUN python3 /tmp/patch_templates.py
 
-# Premium themes
+# Premium themes - copy ALL theme files
 COPY --chown=searxng:searxng ./src/less/themes/ searx/less/themes/
+
+# Ensure nord-frost theme is available
+RUN ls -la searx/less/themes/ 2>/dev/null || echo "No themes dir"
 
 # fix opensearch autocompleter (force method of autocompleter to use GET reuqests)
 RUN sed -i '/{% if autocomplete %}/,/{% endif %}/s|method="{{ opensearch_method }}"|method="GET"|g' searx/templates/simple/opensearch.xml
