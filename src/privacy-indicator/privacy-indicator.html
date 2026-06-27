@@ -1,0 +1,138 @@
+<!-- Privacy & Security Indicator Badge -->
+<style>
+.privacy-badge {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 18px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.privacy-badge:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+}
+.privacy-badge .icon { font-size: 18px; }
+.privacy-badge .shield { color: #4ade80; }
+.privacy-popup {
+    display: none;
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 320px;
+    background: #1a1a2e;
+    border-radius: 16px;
+    padding: 20px;
+    z-index: 10000;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    color: #e2e8f0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+.privacy-popup.active { display: block; animation: slideUp 0.3s ease; }
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.privacy-popup h3 { margin: 0 0 15px 0; color: #fff; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+.privacy-popup .feature { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #333; }
+.privacy-popup .feature:last-child { border-bottom: none; }
+.privacy-popup .feature .check { color: #4ade80; font-size: 18px; }
+.privacy-popup .feature .text { font-size: 13px; }
+.privacy-popup .feature .label { color: #94a3b8; font-size: 11px; }
+.privacy-mode-selector { margin-top: 15px; padding-top: 15px; border-top: 1px solid #333; }
+.privacy-mode-selector label { font-size: 12px; color: #94a3b8; display: block; margin-bottom: 8px; }
+.mode-buttons { display: flex; gap: 8px; }
+.mode-btn { flex: 1; padding: 8px 4px; border: 2px solid #333; background: transparent; color: #94a3b8; border-radius: 8px; cursor: pointer; font-size: 11px; transition: all 0.2s; }
+.mode-btn:hover { border-color: #667eea; color: #fff; }
+.mode-btn.active { border-color: #667eea; background: rgba(102, 126, 234, 0.2); color: #fff; }
+.mode-btn.speed { border-color: #f59e0b; }
+.mode-btn.speed.active { background: rgba(245, 158, 11, 0.2); border-color: #f59e0b; }
+.mode-btn.balanced { border-color: #8b5cf6; }
+.mode-btn.balanced.active { background: rgba(139, 92, 246, 0.2); border-color: #8b5cf6; }
+.mode-btn.privacy { border-color: #10b981; }
+.mode-btn.privacy.active { background: rgba(16, 185, 129, 0.2); border-color: #10b981; }
+.close-popup { position: absolute; top: 10px; right: 10px; background: none; border: none; color: #666; cursor: pointer; font-size: 20px; }
+.close-popup:hover { color: #fff; }
+</style>
+
+<div class="privacy-badge" onclick="togglePrivacyPopup()">
+    <span class="icon shield">🛡️</span>
+    <span>Privacy Protected</span>
+</div>
+
+<div class="privacy-popup" id="privacyPopup">
+    <button class="close-popup" onclick="togglePrivacyPopup()">×</button>
+    <h3>🔒 Privacy & Security</h3>
+    
+    <div class="feature">
+        <span class="check">✓</span>
+        <div>
+            <div class="text">Zero-Knowledge E2EE</div>
+            <div class="label">Searches encrypted end-to-end</div>
+        </div>
+    </div>
+    
+    <div class="feature">
+        <span class="check">✓</span>
+        <div>
+            <div class="text">30+ Tracking Headers Blocked</div>
+            <div class="label">Google, Facebook, Cloudflare blocked</div>
+        </div>
+    </div>
+    
+    <div class="feature">
+        <span class="check">✓</span>
+        <div>
+            <div class="text">Zero Logs Policy</div>
+            <div class="label">No search history stored</div>
+        </div>
+    </div>
+    
+    <div class="feature">
+        <span class="check">✓</span>
+        <div>
+            <div class="text">Fake IP Injection</div>
+            <div class="label">Real IP hidden from hosting</div>
+        </div>
+    </div>
+    
+    <div class="feature">
+        <span class="check">✓</span>
+        <div>
+            <div class="text">Security Headers</div>
+            <div class="label">CSP, HSTS, X-Frame-Options</div>
+        </div>
+    </div>
+    
+    <div class="privacy-mode-selector">
+        <label>Privacy Mode:</label>
+        <div class="mode-buttons">
+            <button class="mode-btn speed" onclick="setPrivacyMode('speed')">⚡ Speed</button>
+            <button class="mode-btn balanced active" onclick="setPrivacyMode('balanced')">⚖️ Balanced</button>
+            <button class="mode-btn privacy" onclick="setPrivacyMode('privacy')">🔒 Max</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePrivacyPopup() {
+    document.getElementById('privacyPopup').classList.toggle('active');
+}
+function setPrivacyMode(mode) {
+    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    document.cookie = 'privacy_mode=' + mode + ';path=/;max-age=' + (60*60*24*30);
+    fetch('/api/privacy/mode', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({mode: mode})}).catch(function(){});
+}
+</script>
