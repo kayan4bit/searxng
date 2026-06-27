@@ -100,89 +100,108 @@ COPY --chown=searxng:searxng ./src/search/ai_summarize.py searx/search/ai_summar
 # fix opensearch autocompleter (force method of autocompleter to use GET reuqests)
 RUN sed -i '/{% if autocomplete %}/,/{% endif %}/s|method="{{ opensearch_method }}"|method="GET"|g' searx/templates/simple/opensearch.xml
 
-# set default settings - Kagi is now the PRIMARY default engine
-RUN sed -i -e "/safe_search:/s/0/1/g" \
--e "/autocomplete:/s/\"\"/\"google\"/g" \
--e "/autocomplete_min:/s/4/0/g" \
--e "/favicon_resolver:/s/\"\"/\"google\"/g" \
--e "/port:/s/8888/8080/g" \
--e "/simple_style:/s/auto/kagi/g" \
--e '/searx\.plugins\.infinite_scroll\.SXNGPlugin:/{n;s/active: false/active: true/;}' \
--e "/query_in_title:/s/false/true/g" \
--e '/default_lang:/s/ ""/ en/g' \
--e "/method:/s/\"POST\"/\"GET\"/g" \
--e "/http_protocol_version:/s/1.0/1.1/g" \
--e "s/# max_request_timeout: 10.0/max_request_timeout: 5.0/g" \
--e "/X-Content-Type-Options: nosniff/d" \
--e "/X-XSS-Protection: 1; mode=block/d" \
--e "/X-Robots-Tag: noindex, nofollow/d" \
--e "/Referrer-Policy: no-referrer/d" \
--e "/news:/{n;s/.*//}" \
--e "/files:/d" \
--e "/social media:/d" \
--e "/static_use_hash:/s/false/true/g" \
--e "s/    use_mobile_ui: false/    use_mobile_ui: true/g" \
--e "/disabled: false/d" \
--e "/name: aol/s/$/\n    disabled: true/g" \
--e "/name: aol images/s/$/\n    disabled: true/g" \
--e "/name: aol videos/s/$/\n    disabled: true/g" \
--e "/name: karmasearch/s/$/\n    disabled: true/g" \
--e "/name: karmasearch images/s/$/\n    disabled: true/g" \
--e "/name: karmasearch videos/s/$/\n    disabled: true/g" \
--e "/name: karmasearch news/s/$/\n    disabled: true/g" \
--e "/name: wikispecies/s/$/\n    disabled: true/g" \
--e "/name: wikinews/s/$/\n    disabled: true/g" \
--e "/name: wikibooks/s/$/\n    disabled: true/g" \
--e "/name: wikivoyage/s/$/\n    disabled: true/g" \
--e "/name: wikiversity/s/$/\n    disabled: true/g" \
--e "/name: wikiquote/s/$/\n    disabled: true/g" \
--e "/name: wikisource/s/$/\n    disabled: true/g" \
--e "/name: wikicommons.images/s/$/\n    disabled: true/g" \
--e "/name: wikicommons.videos/s/$/\n    disabled: true/g" \
--e "/name: pinterest/s/$/\n    disabled: true/g" \
--e "/name: piped/s/$/\n    disabled: true/g" \
--e "/name: public domain image archive/s/$/\n    disabled: true/g" \
--e "/name: piped.music/s/$/\n    disabled: true/g" \
--e "/name: bandcamp/s/$/\n    disabled: true/g" \
--e "/name: radio browser/s/$/\n    disabled: true/g" \
--e "/name: mixcloud/s/$/\n    disabled: true/g" \
--e "/name: hoogle/s/$/\n    disabled: true/g" \
--e "/name: currency/s/$/\n    disabled: false/g" \
--e "/name: qwant/s/$/\n    disabled: true/g" \
--e "/name: btdigg/s/$/\n    disabled: true/g" \
--e "/name: lucide/s/$/\n    disabled: true/g" \
--e "/name: devicons/s/$/\n    disabled: true/g" \
--e "/name: pexels/s/$/\n    disabled: true/g" \
--e "/name: docker hub/s/$/\n    disabled: true/g" \
--e "/name: github/s/$/\n    disabled: true/g" \
--e "/name: semantic scholar/s/$/\n    disabled: true/g" \
--e "/name: openairedatasets/s/$/\n    disabled: true/g" \
--e "/name: sepiasearch/s/$/\n    disabled: true/g" \
--e "/name: dailymotion/s/$/\n    disabled: true/g" \
--e "/name: deviantart/s/$/\n    disabled: true/g" \
--e "/name: vimeo/s/$/\n    disabled: true/g" \
--e "/name: openairepublications/s/$/\n    disabled: true/g" \
--e "/name: library of congress/s/$/\n    disabled: true/g" \
--e "/name: dictzone/s/$/\n    disabled: true/g" \
--e "/name: baidu/s/$/\n    disabled: true/g" \
--e "/name: lingva/s/$/\n    disabled: fasle/g" \
--e "/name: genius/s/$/\n    disabled: true/g" \ 
--e "/name: wallhaven/s/$/\n    disabled: true/g" \ 
--e "/name: artic/s/$/\n    disabled: true/g" \
--e "/name: flickr/s/$/\n    disabled: true/g" \
--e "/name: unsplash/s/$/\n    disabled: true/g" \
--e "/name: gentoo/s/$/\n    disabled: true/g" \
--e "/name: openverse/s/$/\n    disabled: true/g" \
--e "/name: google videos/s/$/\n    disabled: true/g" \
--e "/name: yahoo news/s/$/\n    disabled: true/g" \
--e "/name: bing news/s/$/\n    disabled: true/g" \
--e "/name: tineye/s/$/\n    disabled: true/g" \
--e "/name: kagi/s/$/\n    disabled: false/g" \
--e "/engine: startpage/s/$/\n    disabled: true/g" \
--e "/name: ddg definitions/,+5{/disabled: true/d;}" \
--e "/shortcut: fd/{n;s/.*/    disabled: false/}" \
--e "/name: google/s/$/\n    disabled: true/g" \
--searx/settings.yml;
+# set default settings - split into multiple RUN commands to avoid sed length limits
+
+# Basic settings
+RUN sed -i 's/safe_search: 0/safe_search: 1/g' searx/settings.yml && \
+    sed -i 's/autocomplete: ""/autocomplete: "google"/g' searx/settings.yml && \
+    sed -i 's/autocomplete_min: 4/autocomplete_min: 0/g' searx/settings.yml && \
+    sed -i 's/favicon_resolver: ""/favicon_resolver: "google"/g' searx/settings.yml && \
+    sed -i 's/port: 8888/port: 8080/g' searx/settings.yml && \
+    sed -i 's/simple_style: auto/simple_style: kagi/g' searx/settings.yml && \
+    sed -i 's/# max_request_timeout: 10.0/max_request_timeout: 5.0/g' searx/settings.yml && \
+    sed -i 's/static_use_hash: false/static_use_hash: true/g' searx/settings.yml && \
+    sed -i 's/use_mobile_ui: false/use_mobile_ui: true/g' searx/settings.yml && \
+    sed -i 's/query_in_title: false/query_in_title: true/g' searx/settings.yml && \
+    sed -i 's/method: "POST"/method: "GET"/g' searx/settings.yml && \
+    sed -i 's/http_protocol_version: "1.0"/http_protocol_version: "1.1"/g' searx/settings.yml
+
+# Remove unwanted settings
+RUN sed -i '/X-Content-Type-Options: nosniff/d' searx/settings.yml && \
+    sed -i '/X-XSS-Protection: 1; mode=block/d' searx/settings.yml && \
+    sed -i '/X-Robots-Tag: noindex, nofollow/d' searx/settings.yml && \
+    sed -i '/Referrer-Policy: no-referrer/d' searx/settings.yml && \
+    sed -i '/^news:/,/^  [a-z]/d' searx/settings.yml && \
+    sed -i '/^files:/,/^  [a-z]/d' searx/settings.yml && \
+    sed -i '/^social media:/,/^  [a-z]/d' searx/settings.yml && \
+    sed -i '/^  default_lang: ""/s//  default_lang: en/' searx/settings.yml && \
+    sed -i '/infinite_scroll/,/active: false/s/active: false/active: true/' searx/settings.yml
+
+# Disable engines - Tier 1 (trash/broken)
+RUN sed -i '/name: aol$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: aol images$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: aol videos$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: karmasearch$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: karmasearch images$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: karmasearch videos$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: karmasearch news$/a\    disabled: true' searx/settings.yml
+
+# Disable engines - Tier 2 (wiki junk)
+RUN sed -i '/name: wikispecies$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: wikinews$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: wikibooks$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: wikivoyage$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: wikiversity$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: wikiquote$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: wikisource$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: wikicommons.images$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: wikicommons.videos$/a\    disabled: true' searx/settings.yml
+
+# Disable engines - Tier 3 (privacy concerns/poor quality)
+RUN sed -i '/name: pinterest$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: piped$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: piped.music$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: public domain image archive$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: bandcamp$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: radio browser$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: mixcloud$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: hoogle$/a\    disabled: true' searx/settings.yml
+
+# Disable engines - Tier 4 (clutter)
+RUN sed -i '/name: qwant$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: btdigg$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: lucide$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: devicons$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: pexels$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: docker hub$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: github$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: semantic scholar$/a\    disabled: true' searx/settings.yml
+
+# Disable engines - Tier 5 (more clutter)
+RUN sed -i '/name: openairedatasets$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: sepiasearch$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: dailymotion$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: deviantart$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: vimeo$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: openairepublications$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: library of congress$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: dictzone$/a\    disabled: true' searx/settings.yml
+
+# Disable engines - Tier 6 (even more clutter)
+RUN sed -i '/name: baidu$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: lingva$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: genius$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: wallhaven$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: artic$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: flickr$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: unsplash$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: gentoo$/a\    disabled: true' searx/settings.yml
+
+# Disable engines - Tier 7 (final clutter)
+RUN sed -i '/name: openverse$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: google videos$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: yahoo news$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: bing news$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: tineye$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/engine: startpage$/a\    disabled: true' searx/settings.yml && \
+    sed -i '/name: google$/a\    disabled: true' searx/settings.yml
+
+# Enable Kagi (PRIMARY) and other good engines
+RUN sed -i '/name: kagi$/a\    disabled: false' searx/settings.yml && \
+    sed -i '/name: currency$/a\    disabled: false' searx/settings.yml && \
+    sed -i '/shortcut: fd/,/disabled:/{s/disabled: true/disabled: false/}' searx/settings.yml && \
+    sed -i '/name: ddg definitions/,/disabled:/{s/disabled: true/disabled: false/}' searx/settings.yml && \
+    sed -i 's/disabled: false//g' searx/settings.yml
 
 EXPOSE 8080
 
