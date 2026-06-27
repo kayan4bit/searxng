@@ -136,14 +136,16 @@ COPY --chown=searxng:searxng ./src/search/ai_summary.py searx/search/ai_summary.
 COPY --chown=searxng:searxng ./src/patch_templates.py /tmp/patch_templates.py
 RUN python3 /tmp/patch_templates.py
 
-# Premium themes - copy ALL theme files
+# Premium themes - copy ALL theme files and compile
 COPY --chown=searxng:searxng ./src/less/themes/ searx/less/themes/
+RUN ls -la searx/less/themes/ | head -20
 
-# Ensure nord-frost theme is available
-RUN ls -la searx/less/themes/ 2>/dev/null || echo "No themes dir"
+# Force nord-frost theme in settings.yml
+RUN sed -i 's/simple_style: auto/simple_style: nord-frost/' searx/settings.yml
 
-# fix opensearch autocompleter (force method of autocompleter to use GET reuqests)
-RUN sed -i '/{% if autocomplete %}/,/{% endif %}/s|method="{{ opensearch_method }}"|method="GET"|g' searx/templates/simple/opensearch.xml
+# fix opensearch autocompleter + update for Atomic Search
+RUN sed -i '/{% if autocomplete %}/,/{% endif %}/s|method="{{ opensearch_method }}"|method="GET"|g' searx/templates/simple/opensearch.xml \
+&& sed -i 's/SearXNG/Atomic Search/g' searx/templates/simple/opensearch.xml
 
 # Add static file cache headers for speed
 RUN sed -i "s|SEND_FILE_MAX_AGE_DEFAULT = 3600|SEND_FILE_MAX_AGE_DEFAULT = 86400|" searx/webapp.py
