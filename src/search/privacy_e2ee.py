@@ -35,8 +35,9 @@ try:
 except ImportError:
     HAS_CRYPTO = False
 
-# Headers that leak user identity/location - STRICTLY BLOCKED
+# Headers that leak user identity/location - STRICTLY BLOCKED (30+ headers)
 TRACKING_HEADERS = frozenset({
+    # IP/Location tracking
     "x-forwarded-for",
     "x-real-ip",
     "cf-connecting-ip",
@@ -44,14 +45,35 @@ TRACKING_HEADERS = frozenset({
     "x-azure-clientip",
     "x-true-client-ip",
     "x-client-ip",
-    "x-akamai-request-logging-id",
-    "x-skyflow-client-remote-address",
-    "cf-ray",
-    "x-sigcanvas-trace-id",
     "x-vercel-forwarded-for",
     "x-now-deployment-url",
+    "x-bluemix-clientip",
+    "x-ibm-clientip",
+    "x-akamai-request-logging-id",
+    "x-skyflow-client-remote-address",
+    "x-dynatrace",
+    "x-sjdg-request-id",
+    "x-nginx-proxy-real-ip",
+    # Cloudflare
+    "cf-ray",
+    "cf-visitor",
+    "cf-worker",
+    "cf-ipcountry",
+    "cf-ray-id",
+    # Railway specific
     "x-railway-forwarded-proto",
     "x-railway-router-headers",
+    "x-railway-request-id",
+    "railway-deployment-id",
+    # Other tracking
+    "x-sigcanvas-trace-id",
+    "x-request-id",
+    "x-correlation-id",
+    "x-transaction-id",
+    "x-trace-id",
+    # Fingerprinting
+    "user-agent",
+    "accept-language",  # Can identify user
 })
 
 # Privacy headers to ADD to responses
@@ -60,19 +82,43 @@ PRIVACY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "X-XSS-Protection": "1; mode=block",
-    "Permissions-Policy": "accelerometer=(), camera=(), document-domain=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
+    "Permissions-Policy": "accelerometer=(), camera=(), document-domain=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()",
     "Cross-Origin-Embedder-Policy": "require-corp",
     "Cross-Origin-Opener-Policy": "same-origin",
     "Cross-Origin-Resource-Policy": "same-site",
     "X-DNS-Prefetch-Control": "on",
     "Server": "SXNG-Privacy",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+    "Pragma": "no-cache",
 }
 
-# Content-Security-Policy header
-CSP_HEADER = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+# Enhanced Content-Security-Policy header - very strict
+CSP_HEADER = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+    "style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data: https: blob:; "
+    "font-src 'self' data:; "
+    "connect-src 'self' https://kagi.com https://*.kagi.com; "
+    "frame-ancestors 'none'; "
+    "base-uri 'self'; "
+    "form-action 'self'; "
+    "object-src 'none'; "
+    "child-src 'none'; "
+    "worker-src 'self' blob:; "
+    "upgrade-insecure-requests"
+)
 
-# Search-related domains for obfuscation
-FAKE_SEARCH_TERMS = ["weather", "news", "sports", "shopping", "recipes", "movies", "music", "travel", "jobs", "cars"]
+# Search-related domains for obfuscation - makes queries look like random searches
+FAKE_SEARCH_TERMS = [
+    "weather", "news", "sports", "shopping", "recipes", 
+    "movies", "music", "travel", "jobs", "cars",
+    "restaurants", "hotels", "flights", "stocks",
+    "forecast", "temperature", "climate", "horoscopes",
+    "weather today", "local news", "sports scores",
+    "movie reviews", "song lyrics", "recipe ideas"
+]
 
 
 class ZeroKnowledgeEncryption:
