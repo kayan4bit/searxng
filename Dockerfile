@@ -144,8 +144,9 @@ RUN ls -la searx/less/themes/ | head -20
 RUN sed -i 's/simple_style: auto/simple_style: nord-frost/' searx/settings.yml \
 && sed -i "s/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black')/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black', 'nord-frost', 'dracula-pro', 'material-ocean')/" searx/settings_defaults.py
 
-# fix opensearch autocompleter (force method of autocompleter to use GET reuqests)
-RUN sed -i '/{% if autocomplete %}/,/{% endif %}/s|method="{{ opensearch_method }}"|method="GET"|g' searx/templates/simple/opensearch.xml
+# fix opensearch autocompleter + update for Atomic Search
+RUN sed -i '/{% if autocomplete %}/,/{% endif %}/s|method="{{ opensearch_method }}"|method="GET"|g' searx/templates/simple/opensearch.xml \
+&& sed -i 's/SearXNG/Atomic Search/g' searx/templates/simple/opensearch.xml
 
 # Add static file cache headers for speed
 RUN sed -i "s|SEND_FILE_MAX_AGE_DEFAULT = 3600|SEND_FILE_MAX_AGE_DEFAULT = 86400|" searx/webapp.py

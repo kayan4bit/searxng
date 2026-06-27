@@ -102,25 +102,29 @@ if os.path.exists(base_html):
         content = f.read()
     content = content.replace('SearXNG', 'Atomic Search')
     # Remove old panels
-    for old in ['atomic-ai-panel', 'atomic-ai-btn', 'atomic-ai-overlay']:
+    for old in ['atomic-ai-panel', 'atomic-ai-btn', 'atomic-ai-overlay', 'atomic-privacy']:
         if f'class="{old}"' in content or f'id="{old}"' in content:
             idx = content.find(f'id="{old}"' if f'id="{old}"' in content else f'class="{old}"')
-            # Find start of style or div
             start = content.rfind('<style', 0, idx)
             if start == -1: start = content.rfind('<div', 0, idx)
             end = content.find('</script>', idx) + 9
-            content = content[:start] + content[end:]
-    # Remove old privacy
-    if 'atomic-privacy' in content:
-        idx = content.find('atomic-privacy')
-        start = content.rfind('<style', 0, idx)
-        if start == -1: start = content.rfind('<div', 0, idx)
-        end = content.find('</script>', idx) + 9
-        content = content[:start] + content[end:]
+            if end > start: content = content[:start] + content[end:]
     content = content + ai_btn + ai_panel
     with open(base_html, "w") as f:
         f.write(content)
     print("Slide-out AI panel added!")
 else:
     print("base.html not found")
+
+# Add OpenSearch for setting as default search engine
+opensearch_xml = "/usr/local/searxng/searx/templates/simple/opensearch.xml"
+if os.path.exists(opensearch_xml):
+    with open(opensearch_xml, "r") as f:
+        content = f.read()
+    content = content.replace('SearXNG', 'Atomic Search')
+    with open(opensearch_xml, "w") as f:
+        f.write(content)
+    print("OpenSearch updated!")
+
+# Update patch_templates.py to handle OpenSearch
 print("Done!")
