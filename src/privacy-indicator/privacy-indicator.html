@@ -1,45 +1,88 @@
 <style>
-.privacy-badge-fixed{position:fixed;bottom:20px;right:20px;z-index:999999;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
-.privacy-btn{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border:none;padding:12px 20px;border-radius:50px;cursor:pointer;font-size:14px;font-weight:600;box-shadow:0 4px 15px rgba(102,126,234,.4);display:flex;align-items:center;gap:8px}
-.privacy-btn:hover{transform:translateY(-2px)}
-.privacy-popup{display:none;position:absolute;bottom:60px;right:0;background:#fff;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.2);padding:24px;width:320px}
-.privacy-popup.active{display:block}
-.privacy-popup h3{margin:0 0 16px;color:#667eea}
-.privacy-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #eee}
-.privacy-check{color:#10b981;font-size:18px}
-.privacy-text{flex:1}
-.privacy-text strong{display:block;font-size:14px}
-.privacy-text span{font-size:12px;color:#666}
-.mode-selector{display:flex;gap:8px;margin-top:16px}
-.mode-btn{flex:1;padding:10px;border:2px solid #667eea;background:#fff;border-radius:8px;cursor:pointer;font-size:12px}
-.mode-btn:hover,.mode-btn.active{background:#667eea;color:#fff}
-.close-btn{position:absolute;top:10px;right:10px;background:none;border:none;font-size:24px;cursor:pointer;color:#999}
+.atomic-privacy{position:fixed;bottom:20px;right:20px;z-index:999999;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.atomic-btn{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;padding:14px 22px;border-radius:50px;cursor:pointer;font-size:14px;font-weight:600;box-shadow:0 4px 20px rgba(102,126,234,.4);display:flex;align-items:center;gap:8px;transition:all .2s}
+.atomic-btn:hover{transform:translateY(-2px);box-shadow:0 6px 25px rgba(102,126,234,.5)}
+.atomic-popup{display:none;position:absolute;bottom:65px;right:0;background:#fff;border-radius:16px;box-shadow:0 10px 50px rgba(0,0,0,.2);padding:24px;width:340px;font-size:13px}
+.atomic-popup.show{display:block}
+.atomic-popup h3{color:#667eea;font-size:17px;margin:0 0 14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.atomic-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #eee}
+.atomic-item:last-of-type{border-bottom:none}
+.atomic-check{color:#10b981;font-size:18px;font-weight:bold;width:20px;text-align:center}
+.atomic-text{flex:1}
+.atomic-text strong{display:block;font-size:13px}
+.atomic-text span{font-size:11px;color:#666}
+.atomic-modes{display:flex;gap:6px;margin-top:16px}
+.mode-btn{flex:1;padding:10px 6px;border:2px solid #667eea;background:#fff;border-radius:8px;cursor:pointer;font-size:11px;font-weight:600;transition:all .2s}
+.mode-btn:hover,.mode-btn.active{color:#fff}
+.mode-btn.speed{border-color:#f59e0b;color:#f59e0b}
+.mode-btn.speed:hover,.mode-btn.speed.active{background:#f59e0b;border-color:#f59e0b;color:#fff}
+.mode-btn.balanced{border-color:#10b981;color:#10b981}
+.mode-btn.balanced:hover,.mode-btn.balanced.active{background:#10b981;border-color:#10b981;color:#fff}
+.mode-btn.max{border-color:#667eea;color:#667eea}
+.mode-btn.max:hover,.mode-btn.max.active{background:#667eea;border-color:#667eea;color:#fff}
+.atomic-stats{margin-top:14px;padding:12px;background:#f8f9fa;border-radius:8px;font-size:11px;color:#666}
+.atomic-stats strong{color:#333}
+.close-btn{position:absolute;top:10px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:#999}
 </style>
-<div class="privacy-badge-fixed">
-<button class="privacy-btn" id="privacyBtn" onclick="togglePopup()">
+<div class="atomic-privacy">
+<button class="atomic-btn" id="atomicBtn" onclick="toggleAtomicPopup()">
 <span>&#128274;</span>
-<span id="privacyStatus">Privacy Protected</span>
+<span id="atomicStatus">Protected</span>
 </button>
-<div class="privacy-popup" id="privacyPopup">
-<button class="close-btn" onclick="togglePopup()">&times;</button>
-<h3>&#128274; Privacy & Security</h3>
-<div class="privacy-item"><span class="privacy-check">&#10003;</span><div class="privacy-text"><strong>E2EE Encryption</strong><span>End-to-end encrypted search</span></div></div>
-<div class="privacy-item"><span class="privacy-check">&#10003;</span><div class="privacy-text"><strong>30+ Trackers Blocked</strong><span>Google, Facebook blocked</span></div></div>
-<div class="privacy-item"><span class="privacy-check">&#10003;</span><div class="privacy-text"><strong>Zero Logs Policy</strong><span>No search history</span></div></div>
-<div class="privacy-item"><span class="privacy-check">&#10003;</span><div class="privacy-text"><strong>Fake IP Injection</strong><span>Real IP hidden</span></div></div>
-<div class="mode-selector">
-<button class="mode-btn" onclick="setMode('speed',this)">&#9889; Speed</button>
-<button class="mode-btn active" onclick="setMode('balanced',this)">&#9878; Balanced</button>
-<button class="mode-btn" onclick="setMode('max',this)">&#128274; Max</button>
+<div class="atomic-popup" id="atomicPopup">
+<button class="close-btn" onclick="toggleAtomicPopup()">&times;</button>
+<h3>&#128274; <span id="atomicTitle">Atomic Privacy</span></h3>
+<div class="atomic-item"><span class="atomic-check">&#10003;</span><div class="atomic-text"><strong>40+ Trackers Blocked</strong><span>Google, Facebook, Cloudflare</span></div></div>
+<div class="atomic-item"><span class="atomic-check">&#10003;</span><div class="atomic-text"><strong>E2EE Encryption</strong><span>End-to-end encrypted</span></div></div>
+<div class="atomic-item"><span class="atomic-check">&#10003;</span><div class="atomic-text"><strong>Zero Logs Policy</strong><span>No search history</span></div></div>
+<div class="atomic-item"><span class="atomic-check">&#10003;</span><div class="atomic-text"><strong>Security Headers</strong><span>CSP, HSTS, X-Frame-Options</span></div></div>
+<div class="atomic-modes">
+<button class="mode-btn speed" id="speedBtn" onclick="setAtomicMode('speed',this)">&#9889; Speed</button>
+<button class="mode-btn balanced" id="balancedBtn" onclick="setAtomicMode('balanced',this)">&#9878; Balanced</button>
+<button class="mode-btn max" id="maxBtn" onclick="setAtomicMode('max',this)">&#128274; Max</button>
+</div>
+<div class="atomic-stats" id="atomicStats">
+<strong>Trackers blocked:</strong> <span id="trackerCount">40</span>
 </div>
 </div>
 </div>
 <script>
-function togglePopup(){document.getElementById("privacyPopup").classList.toggle("active")}
-function setMode(mode,btn){
-document.cookie="privacy_mode="+mode+";path=/;max-age="+(30*24*60*60);
-document.querySelectorAll(".mode-btn").forEach(b=>b.classList.remove("active"));
-btn.classList.add("active");
-document.getElementById("privacyStatus").textContent=mode==="max"?"Maximum":mode==="speed"?"Speed Mode":"Protected";
-}
+(function(){
+  var currentMode = document.cookie.match(/atomic_mode=([^;]+)/)?.[1] || "balanced";
+  function toggleAtomicPopup(){
+    var popup = document.getElementById("atomicPopup");
+    popup.classList.toggle("show");
+    if(popup.classList.contains("show")){
+      fetch("/api/privacy/status").then(r=>r.json()).then(function(d){
+        document.getElementById("trackerCount").textContent = d.trackers_blocked || 40;
+        var mode = d.current_mode || "balanced";
+        setActiveMode(mode);
+      }).catch(function(){});
+    }
+  }
+  function setActiveMode(mode){
+    ["speed","balanced","max"].forEach(function(m){
+      var btn = document.getElementById(m+"Btn");
+      if(btn) btn.classList.remove("active");
+    });
+    var btn = document.getElementById(mode+"Btn");
+    if(btn) btn.classList.add("active");
+    var status = document.getElementById("atomicStatus");
+    if(status) status.textContent = mode==="speed"?"Speed":mode==="max"?"Maximum":"Protected";
+  }
+  function setAtomicMode(mode,btn){
+    fetch("/api/privacy/mode",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({mode:mode})
+    }).then(function(){
+      document.cookie = "atomic_mode="+mode+";path=/;max-age="+(30*24*60*60);
+      setActiveMode(mode);
+      location.reload();
+    });
+  }
+  setActiveMode(currentMode);
+  window.toggleAtomicPopup = toggleAtomicPopup;
+  window.setAtomicMode = setAtomicMode;
+})();
 </script>
