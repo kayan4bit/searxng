@@ -139,8 +139,8 @@ RUN python3 /tmp/patch_templates.py
 # Premium themes - copy ALL theme files
 COPY --chown=searxng:searxng ./src/less/themes/ searx/less/themes/
 
-# Ensure nord-frost theme is available
-RUN ls -la searx/less/themes/ 2>/dev/null || echo "No themes dir"
+# Force nord-frost theme in settings.yml
+RUN sed -i 's/simple_style: auto/simple_style: nord-frost/' searx/settings.yml
 
 # fix opensearch autocompleter (force method of autocompleter to use GET reuqests)
 RUN sed -i '/{% if autocomplete %}/,/{% endif %}/s|method="{{ opensearch_method }}"|method="GET"|g' searx/templates/simple/opensearch.xml
