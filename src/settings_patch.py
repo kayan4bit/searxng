@@ -96,10 +96,29 @@ def patch_settings():
         replacement = r'\1    disabled: true\n'
         content = re.sub(pattern, replacement, content)
     
-    # Engines to enable
-    enabled_engines = ['kagi', 'currency']
-    for engine in enabled_engines:
-        pattern = rf'(name: {re.escape(engine)}\n)(?!    disabled:)'
+    # Add Kagi engine if not present (this is the key fix!)
+    kagi_engine = '''  - name: kagi
+    engine: kagi
+    shortcut: kg
+    disabled: false
+'''
+    
+    # Check if kagi already exists
+    if 'name: kagi' not in content:
+        # Find where to insert (before google or after other engines)
+        # Look for first engine definition
+        match = re.search(r'(\n  - name: \w+)', content)
+        if match:
+            # Insert kagi at the beginning of engines list
+            content = content.replace(match.group(1), kagi_engine + match.group(1), 1)
+        else:
+            # Fallback: insert before first "- name:"
+            content = re.sub(r'(\n- name: )', '\n' + kagi_engine + r'\1', content, count=1)
+        print("Added Kagi engine to settings.yml")
+    
+    # Enable currency engine if it exists
+    if 'name: currency' in content:
+        pattern = r'(name: currency\n)(?!    disabled:)'
         replacement = r'\1    disabled: false\n'
         content = re.sub(pattern, replacement, content)
     
