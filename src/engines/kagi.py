@@ -8,6 +8,7 @@ Features:
 - Priority boosting for quality sources (Kagi, Reddit, HN, etc.)
 - Fast HTML parsing with optimized XPath queries
 - Result deduplication and cleaning
+- Query context boosting
 """
 
 import re
@@ -23,7 +24,7 @@ from searx.result_types import EngineResults
 # Tier 1: Kagi ecosystem (highest priority)
 KAGI_TIER1 = frozenset({
     "kagi.com",
-    "kagifeedback.org", 
+    "kagifeedback.org",
     "kagisearch.com",
     "help.kagi.com",
     "blog.kagi.com",
@@ -39,19 +40,24 @@ KAGI_TIER2 = frozenset({
     "old.reddit.com",
     "new.reddit.com",
     "redd.it",
+    "redditmedia.com",
     # Hacker News
     "news.ycombinator.com",
     "hn.algolia.com",
+    "hackernews.com",
     # Lobsters
     "lobste.rs",
-    # Lemmy
+    # Lemmy/Kbin
     "lemmy.ml",
     "beehaw.org",
     "lemmy.world",
+    "kbin.social",
     # Mastodon/Fediverse
     "mastodon.social",
     "fosstodon.org",
     "infosec.exchange",
+    "tech.lgbt",
+    "hachyderm.io",
     # Quora
     "quora.com",
     "qr.ae",
@@ -62,6 +68,13 @@ KAGI_TIER2 = frozenset({
     "serverfault.com",
     "askubuntu.com",
     "stackapps.com",
+    "stackprinter",
+    # Discord
+    "discord.com",
+    # IRC logs
+    "libera.chat",
+    # Matrix
+    "matrix.org",
 })
 
 # Tier 3: Quality reference sites
@@ -71,25 +84,67 @@ KAGI_TIER3 = frozenset({
     "wikidata.org",
     "wiktionary.org",
     "wikimedia.org",
+    "mediawiki.org",
     # Documentation
     "docs.python.org",
+    "docs.python-guide.org",
     "developer.mozilla.org",
     "docs.github.com",
+    "docs.gitlab.com",
     "devdocs.io",
     "readthedocs.io",
+    "dev.to",
+    "poetry.po",
     # Archives
     "archive.org",
     "archive.ph",
     "web.archive.org",
+    "ghostarchive.org",
+    "vitalib.us",
     # News
     "arstechnica.com",
     "theverge.com",
     "wired.com",
     "techcrunch.com",
-    "hackernews.com",
     "bloomberg.com",
     "reuters.com",
     "apnews.com",
+    "bbc.com",
+    "theguardian.com",
+    "nytimes.com",
+    "wsj.com",
+    "economist.com",
+    # Security
+    "schneier.com",
+    "krebsonsecurity.com",
+    "threatpost.com",
+    "darkreading.com",
+    "securityweek.com",
+    # Privacy
+    "privacyguides.org",
+    "privacy.net",
+    "thatoneprivacysite.net",
+    "restoreprivacy.com",
+    # Tech blogs
+    "blogs.gentoo.org",
+    "0x46.net",
+    "lwn.net",
+    "distrowatch.com",
+    "phoronix.com",
+    # Academic
+    "arxiv.org",
+    "scholar.google.com",
+    "semanticscholar.org",
+    "researchgate.net",
+    # Code
+    "github.com",
+    "gitlab.com",
+    "sourcehut.org",
+    "codeberg.org",
+    "sr.ht",
+    # Maps
+    "openstreetmap.org",
+    "wikimapia.org",
 })
 
 # All priority domains combined
@@ -113,8 +168,8 @@ safesearch = False
 
 # Priority scores by tier
 PRIORITY_TIER1_SCORE = 100
-PRIORITY_TIER2_SCORE = 80
-PRIORITY_TIER3_SCORE = 60
+PRIORITY_TIER2_SCORE = 85
+PRIORITY_TIER3_SCORE = 70
 
 priority_boost_domains = list(ALL_PRIORITY_DOMAINS)
 
@@ -150,13 +205,16 @@ def _extract_result_data(elem: html.Element) -> t.Optional[t.Dict[str, t.Any]]:
         './/a[@class="url"]/@href',
         './/h3/a/@href',
         './/a[contains(@href, "http")]//@href',
+        './/div[contains(@class, "url")]/text()',
     ]:
         urls = elem.xpath(xpath)
         if urls:
-            url = urls[0]
-            break
+            url = urls[0] if isinstance(urls[0], str) else str(urls[0])
+            if url and url.startswith("http"):
+                break
+            url = None
     
-    if not url or not isinstance(url, str) or not url.startswith("http"):
+    if not url:
         return None
     
     # Try multiple XPath patterns for title
@@ -166,11 +224,13 @@ def _extract_result_data(elem: html.Element) -> t.Optional[t.Dict[str, t.Any]]:
         './/h3//text()',
         './/a[contains(@class, "result-link")]//text()',
         './/a[@class="url"]//text()',
+        './/span[contains(@class, "title")]//text()',
     ]:
         title_parts = elem.xpath(xpath)
         if title_parts:
-            title = " ".join(t.strip() for t in title_parts if t.strip())
-            break
+            title = " ".join(t.strip() for t in title_parts if t.strip() and isinstance(t, str))
+            if title:
+                break
     
     if not title:
         title = "Untitled"
@@ -182,18 +242,19 @@ def _extract_result_data(elem: html.Element) -> t.Optional[t.Dict[str, t.Any]]:
         './/p[@class="description"]//text()',
         './/div[contains(@class, "snippet")]//text()',
         './/span[contains(@class, "description")]//text()',
-        './/p//text()',
+        './/div[contains(@class, "content")]//text()',
+        './/p[contains(@class, "desc")]//text()',
     ]:
         content_parts = elem.xpath(xpath)
         if content_parts:
-            content = " ".join(t.strip() for t in content_parts if t.strip())
+            content = " ".join(t.strip() for t in content_parts if t.strip() and isinstance(t, str))
             if len(content) > 20:  # Ensure meaningful content
                 break
     
     if not content:
         return None
     
-    return {"url": url, "title": title.strip(), "content": content.strip()}
+    return {"url": url.strip(), "title": title.strip(), "content": content.strip()}
 
 
 def request(query: str, params: t.Dict[str, t.Any]) -> t.Dict[str, t.Any]:
@@ -208,7 +269,7 @@ def request(query: str, params: t.Dict[str, t.Any]) -> t.Dict[str, t.Any]:
     # Kagi search URL format
     params["url"] = f"https://kagi.com/search?q={encoded_query}&lang={lang_code}&page={page}"
     
-    # Set headers for optimal response
+    # Set headers for optimal response - privacy focused
     params["headers"] = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": f"{lang_code},en;q=0.9",
@@ -216,11 +277,13 @@ def request(query: str, params: t.Dict[str, t.Any]) -> t.Dict[str, t.Any]:
         "DNT": "1",
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1",
-        "Cache-Control": "max-age=0",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
     }
     
     # Store priority domains for result processing
     params["priority_boost_domains"] = ALL_PRIORITY_DOMAINS
+    params["query"] = query
     
     return params
 
@@ -245,6 +308,7 @@ def response(resp) -> EngineResults:
         '//div[contains(@class, "web-results")]//div[contains(@class, "result")]',
         '//div[@data-result-type="web"]',
         '//article[contains(@class, "result")]',
+        '//div[contains(@class, "items")]//div[contains(@class, "item")]',
     ]
     
     result_elements = []
@@ -258,6 +322,7 @@ def response(resp) -> EngineResults:
         result_elements = dom.xpath('//div[.//a[contains(@href, "http")]][@class or contains(@class, "item")]')
 
     seen_urls: t.Set[str] = set()
+    query_words = set(resp.search_query.lower().split()) if hasattr(resp, 'search_query') else set()
     
     for elem in result_elements:
         data = _extract_result_data(elem)
@@ -273,6 +338,15 @@ def response(resp) -> EngineResults:
         
         # Calculate priority based on domain
         priority = _get_domain_priority(url)
+        
+        # Boost priority if query terms appear in title
+        title_lower = data["title"].lower()
+        content_lower = data["content"].lower()
+        query_boost = 0
+        if query_words:
+            matches = sum(1 for word in query_words if word in title_lower or word in content_lower)
+            query_boost = matches * 5
+            priority += query_boost
         
         # Clean content - remove extra whitespace
         content = re.sub(r'\s+', ' ', data["content"]).strip()
