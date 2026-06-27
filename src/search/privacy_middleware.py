@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """SearXNG - E2EE + Privacy + Zero-Config."""
 from flask import request, make_response, jsonify
-import hashlib, hmac, secrets, base64, urllib.request, re
+import hashlib, hmac, secrets, base64, urllib.request, re, os, sqlite3
 
 STRICT_CSP = "default-src 'self'; script-src 'self' 'nonce-{n}' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://google.serper.dev https://api.tavily.com; frame-ancestors 'none'; base-uri 'self'"
 HEADERS = {
@@ -82,3 +82,40 @@ def PrivacyMiddleware(app):
             return jsonify({"safe": True, "url": url, "scamadvisor_checked": False})
 
     print("SearXNG: E2EE + Privacy + Zero-Config loaded!")
+
+    # Railway user logging (inside PrivacyMiddleware function)
+    user_db = "/data/users.db"
+    os.makedirs("/data", exist_ok=True)
+    conn = sqlite3.connect(user_db)
+    conn.execute("""CREATE TABLE IF NOT EXISTS railway_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_num TEXT,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        action TEXT,
+        ip_hash TEXT,
+        region TEXT
+    )""")
+    conn.commit()
+    conn.close()
+
+    @app.route("/api/railway/log", methods=["POST"])
+    def railway_log():
+        data = request.get_json() or {}
+        user_num = data.get("user_num", f"user_{secrets.token_hex(4)}")
+        action = data.get("action", "unknown")
+        conn = sqlite3.connect(user_db)
+        conn.execute("INSERT INTO railway_logs (user_num, action, ip_hash, region) VALUES (?, ?, ?, ?)",
+                    (user_num, action, hashlib.sha256(request.remote_addr.encode()).hexdigest()[:8], "EU-West"))
+        conn.commit()
+        cursor = conn.execute("SELECT COUNT(*) FROM railway_logs WHERE user_num=?", (user_num,))
+        count = cursor.fetchone()[0]
+        conn.close()
+        return jsonify({"logged": True, "user": user_num, "requests": count})
+
+    @app.route("/api/railway/logs")
+    def railway_logs():
+        conn = sqlite3.connect(user_db)
+        cursor = conn.execute("SELECT user_num, COUNT(*) as cnt FROM railway_logs GROUP BY user_num ORDER BY cnt DESC LIMIT 10")
+        logs = [{"user": row[0], "requests": row[1]} for row in cursor.fetchall()]
+        conn.close()
+        return jsonify({"top_users": logs})
