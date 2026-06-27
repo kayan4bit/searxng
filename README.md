@@ -1,46 +1,61 @@
-# Privau SearXNG Fork
+# Atomic Search
 
-A privacy-focused SearXNG fork with Kagi-style quality ranking, premium themes, and enhanced privacy features.
+A privacy-focused metasearch engine with Kagi-style quality ranking.
 
 ## Features
 
 ### 🔍 Kagi-Style Quality Ranking
 Priority boosting for quality sources:
-- **Tier 1 (100 pts)**: Kagi ecosystem
+- **Tier 1 (100 pts)**: Kagi ecosystem, Atomic Search
 - **Tier 2 (85 pts)**: Reddit, HN, Lobsters, StackOverflow, Quora, Discord
 - **Tier 3 (70 pts)**: Wikipedia, MDN, GitHub, arxiv, Wired, Ars Technica
 
-### 🛡️ Privacy Features
-- **Privacy Badge UI**: Floating button showing privacy status
-- **Privacy Mode Selector**: Speed / Balanced / Max privacy modes
-- **30+ Trackers Blocked**: Google, Facebook, Cloudflare blocked
+### 🛡️ Real Privacy Features
+- **40+ Trackers Blocked**: Google Analytics, Facebook Pixel, Hotjar, etc.
+- **E2EE Encryption**: End-to-end encrypted search
 - **Zero Logs Policy**: No search history stored
 - **Security Headers**: CSP, HSTS, X-Frame-Options
+- **Privacy Modes**: Speed / Balanced / Max
+
+### ⚡ Privacy Modes
+| Mode | Trackers | Encryption | Speed |
+|------|----------|------------|-------|
+| Speed | Off | Off | Fastest |
+| Balanced | On | On | Fast |
+| Max | On | On + Fake IP | Fast |
 
 ### 🎨 Premium Themes
-- dracula-pro (default), nord-frost, material-ocean
-- 20+ additional themes: Catppuccin, Tokyo Night, One Dark, etc.
+- nord-frost (default), dracula-pro, material-ocean
+- 20+ themes: Catppuccin, Tokyo Night, One Dark
 
-### ⚡ Speed Optimizations (Railway Ready)
-- Single worker for memory efficiency
-- Static file caching (24h)
-- Optimized blocking threads
+## API
 
-## API Keys
-Uses free tier APIs:
-- **Serper.dev**: 2,500 searches/month (set in engine)
-- **Tavily**: Free tier available
+### Search API
+```bash
+curl "http://localhost:8080/api/search?q=openai&limit=10"
+```
+
+### Privacy Status
+```bash
+curl "http://localhost:8080/api/privacy/status"
+```
+
+### Set Privacy Mode
+```bash
+curl -X POST "http://localhost:8080/api/privacy/mode" \
+  -H "Content-Type: application/json" \
+  -d '{"mode":"max"}'
+```
 
 ## Quick Start
 ```bash
-docker build -t searxng .
-docker run -d -p 8080:8080 searxng
+docker build -t atomic-search .
+docker run -d -p 8080:8080 atomic-search
 ```
 
-## Privacy Modes
-- **Speed**: Fast browsing with basic privacy
-- **Balanced**: Recommended - full privacy features
-- **Max**: Maximum privacy with strictest settings
+## API Keys
+- **Serper.dev**: 2,500 searches/month
+- **Tavily**: Free tier
 
 ## License
 AGPL-3.0

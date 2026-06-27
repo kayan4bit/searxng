@@ -68,16 +68,35 @@ RUN sed -i "/'simple_style': EnumStringSetting(/,/center_alignment/ s/choices=\[
 && sed -i "s/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black')/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black', 'paulgo', 'latte', 'frappe', 'macchiato', 'mocha', 'kagi', 'brave', 'moa', 'night', 'dracula', 'gruvbox', 'gruvboxmat', 'everforest', 'nord', 'matcha', 'evergarden', 'catppuccin-mocha', 'catppuccin-macchiato', 'catppuccin-frappe', 'catppuccin-latte', 'tokyo-night', 'solarized', 'one-dark', 'monokai', 'gruvbox-light', 'github', 'nord-frost', 'dracula-pro', 'material-ocean')/" searx/settings_defaults.py \
 && sed -i "s/{%- for name in \['auto', 'light', 'dark', 'black'\] -%}/{%- for name in \['auto', 'light', 'dark', 'black', 'paulgo', 'latte', 'frappe', 'macchiato', 'mocha', 'kagi', 'brave', 'moa', 'night', 'dracula', 'gruvbox', 'gruvboxmat', 'everforest', 'nord', 'matcha', 'evergarden', 'catppuccin-mocha', 'catppuccin-macchiato', 'catppuccin-frappe', 'catppuccin-latte', 'tokyo-night', 'solarized', 'one-dark', 'monokai', 'gruvbox-light', 'github', 'nord-frost', 'dracula-pro', 'material-ocean'\] -%}/" searx/templates/simple/preferences/theme.html
 
-# Enable Serper and Tavily engines (Kagi-style ranking) using sed
+# Enable ONLY Serper engine (Kagi-style ranking) - no duplicates
 RUN sed -i 's/# - name: serper/- name: serper/' searx/settings.yml \
 && sed -i 's/#   engine: serper/  engine: serper/' searx/settings.yml \
 && sed -i 's/#   shortcut: sr/  shortcut: sr/' searx/settings.yml \
-&& sed -i 's/# - name: tavily/- name: tavily/' searx/settings.yml \
-&& sed -i 's/#   engine: tavily/  engine: tavily/' searx/settings.yml \
-&& sed -i 's/#   shortcut: tv/  shortcut: tv/' searx/settings.yml \
-&& sed -i 's/simple_style: auto/simple_style: dracula-pro/' searx/settings.yml \
+&& sed -i 's/simple_style: auto/simple_style: nord-frost/' searx/settings.yml \
 && sed -i 's/safe_search: 0/safe_search: 1/' searx/settings.yml \
-&& sed -i 's/method: "POST"/method: "GET"/' searx/settings.yml
+&& sed -i 's/method: "POST"/method: "GET"/' searx/settings.yml \
+&& sed -i 's/^  - google$/  # - google/' searx/settings.yml \
+&& sed -i 's/^  - bing$/  # - bing/' searx/settings.yml \
+&& sed -i 's/^  - duckduckgo$/  # - duckduckgo/' searx/settings.yml \
+&& sed -i 's/^  - brave$/  # - brave/' searx/settings.yml \
+&& sed -i 's/^  - startpage$/  # - startpage/' searx/settings.yml \
+&& sed -i 's/^  - wikipedia$/  # - wikipedia/' searx/settings.yml \
+&& sed -i 's/^  - wikidata$/  # - wikidata/' searx/settings.yml \
+&& sed -i 's/^  - qwant$/  # - qwant/' searx/settings.yml \
+&& sed -i 's/^  - mojeek$/  # - mojeek/' searx/settings.yml \
+&& sed -i 's/^  - yep$/  # - yep/' searx/settings.yml \
+&& sed -i 's/^  - marginalia$/  # - marginalia/' searx/settings.yml \
+&& sed -i 's/^  - mysql$/  # - mysql/' searx/settings.yml \
+&& sed -i 's/^  - searchcode$/  # - searchcode/' searx/settings.yml \
+&& sed -i 's/^  - solrfile$/  # - solrfile/' searx/settings.yml \
+&& sed -i 's/^  - wiby$/  # - wiby/' searx/settings.yml \
+&& sed -i 's/^  - ask$/  # - ask/' searx/settings.yml \
+&& sed -i 's/^  - swisscows$/  # - swisscows/' searx/settings.yml
+
+# Rename to Atomic Search (only text, not variables)
+RUN sed -i 's/SearXNG/Atomic Search/g' searx/templates/simple/base.html \
+&& sed -i 's/instance_name: "SearXNG"/instance_name: "Atomic Search"/' searx/settings.yml \
+&& sed -i 's/instance_name: SearXNG/instance_name: Atomic Search/' searx/settings.yml
 
 # make patch to allow the privacy policy page
 COPY --chown=searxng:searxng ./src/privacy-policy/privacy-policy.html searx/templates/simple/privacy-policy.html
@@ -110,16 +129,12 @@ COPY --chown=searxng:searxng ./src/engines/tavily.py searx/engines/tavily.py
 
 # Privacy, Zero-Knowledge E2EE, and AI modules
 COPY --chown=searxng:searxng ./src/search/privacy_e2ee.py searx/search/privacy_e2ee.py
-COPY --chown=searxng:searxng ./src/search/privacy_selector.py searx/search/privacy_selector.py
-COPY --chown=searxng:searxng ./src/search/premium_security.py searx/search/premium_security.py
-COPY --chown=searxng:searxng ./src/search/ai_summarize.py searx/search/ai_summarize.py
+COPY --chown=searxng:searxng ./src/search/privacy_middleware.py searx/search/privacy_middleware.py
+COPY --chown=searxng:searxng ./src/search/ai_summary.py searx/search/ai_summary.py
 
-# Privacy indicator badge - inject directly using Python after build
-COPY --chown=searxng:searxng ./src/privacy-indicator/privacy-indicator.html /tmp/privacy-badge.html
-COPY --chown=searxng:searxng ./src/inject_badge.py /tmp/inject_badge.py
-
-# Add privacy badge via Python script
-RUN python3 /tmp/inject_badge.py
+# Privacy indicator badge and template patching
+COPY --chown=searxng:searxng ./src/patch_templates.py /tmp/patch_templates.py
+RUN python3 /tmp/patch_templates.py
 
 # Premium themes
 COPY --chown=searxng:searxng ./src/less/themes/ searx/less/themes/
