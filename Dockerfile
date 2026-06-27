@@ -141,8 +141,7 @@ COPY --chown=searxng:searxng ./src/less/themes/ searx/less/themes/
 RUN ls -la searx/less/themes/ | head -20
 
 # Force nord-frost theme in settings.yml
-RUN sed -i 's/simple_style: auto/simple_style: nord-frost/' searx/settings.yml \
-&& sed -i "s/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black')/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black', 'nord-frost', 'dracula-pro', 'material-ocean')/" searx/settings_defaults.py
+RUN sed -i 's/simple_style: auto/simple_style: nord-frost/' searx/settings.yml
 
 # fix opensearch autocompleter + update for Atomic Search
 RUN sed -i '/{% if autocomplete %}/,/{% endif %}/s|method="{{ opensearch_method }}"|method="GET"|g' searx/templates/simple/opensearch.xml \
