@@ -3,7 +3,7 @@
 from flask import request, make_response, jsonify
 import hashlib, hmac, secrets, base64, urllib.request, re
 
-STRICT_CSP = "default-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://google.serper.dev https://api.tavily.com https://api.search.brave.com https://api.search.brave.com; frame-ancestors 'none'; base-uri 'self'"
+STRICT_CSP = "default-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://google.serper.dev https://api.tavily.com https://api.search.brave.com https://api.search.brave.com ws://localhost:* http://localhost:*; frame-ancestors 'none'; base-uri 'self'"
 HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
