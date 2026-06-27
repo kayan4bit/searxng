@@ -362,30 +362,68 @@ def apply_privacy_patches(app) -> None:
     
     privacy = get_privacy_manager()
     
+    # Try to import mode manager (optional)
+    try:
+        from .privacy_selector import get_mode_manager
+        has_mode_manager = True
+    except ImportError:
+        has_mode_manager = False
+    
     @app.before_request
     def strip_all_tracking():
         """Strip every tracking header before request processing."""
+        # Check privacy mode
+        strict_mode = privacy._strict_mode
+        fake_ip_enabled = True
+        
+        if has_mode_manager:
+            try:
+                mode_manager = get_mode_manager()
+                mode = mode_manager.get_mode_from_request(request)
+                config = mode_manager.get_config(mode)
+                strict_mode = config.get("fake_ip", True)
+            except Exception:
+                pass
+        
         if request.headers:
             cleaned = privacy.strip_tracking_headers(dict(request.headers))
             request.headers._list = [(k, v) for k, v in cleaned.items()]
         
         # In strict mode, add fake IP to prevent Railway logging real one
-        if privacy._strict_mode:
+        if strict_mode:
             if "X-Forwarded-For" not in request.headers and "X-Real-IP" not in request.headers:
                 request.headers.add("X-Forwarded-For", privacy.generate_fake_ip())
     
     @app.after_request
     def add_privacy_headers(response):
         """Add comprehensive privacy headers to all responses."""
+        # Check if caching should be disabled for privacy mode
+        cache_control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+        
+        if has_mode_manager:
+            try:
+                mode_manager = get_mode_manager()
+                mode = mode_manager.get_mode_from_request(request)
+                config = mode_manager.get_config(mode)
+                if config.get("cache_results", True):
+                    cache_control = "public, max-age=3600"
+            except Exception:
+                pass
+        
+        # Add privacy headers
         for header, value in PRIVACY_HEADERS.items():
-            response.headers[header] = value
+            if header != "Cache-Control":  # Handle separately
+                response.headers[header] = value
         
         response.headers["Content-Security-Policy"] = CSP_HEADER
         response.headers["X-Content-Security-Policy"] = CSP_HEADER
+        response.headers["Cache-Control"] = cache_control
         
         # Remove Server version info
-        response.headers["Server"] = "SXNG-Privacy"
-        response.headers.remove("X-Powered-By") if "X-Powered-By" in response.headers else None
+        if "Server" in response.headers:
+            response.headers["Server"] = "SXNG-Privacy"
+        if "X-Powered-By" in response.headers:
+            del response.headers["X-Powered-By"]
         
         return response
     

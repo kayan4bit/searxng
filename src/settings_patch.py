@@ -116,6 +116,20 @@ def patch_settings():
             content = re.sub(r'(\n- name: )', '\n' + kagi_engine + r'\1', content, count=1)
         print("Added Kagi engine to settings.yml")
     
+    # Add privacy mode settings if not present
+    privacy_settings = '''
+# Privacy Mode Settings
+# Available modes: speed, balanced, privacy
+privacy_mode_default: balanced
+privacy_mode_selector_enabled: true
+'''
+    if 'privacy_mode_default' not in content:
+        # Insert after general settings
+        match = re.search(r'(outgoing:)', content)
+        if match:
+            content = content.replace(match.group(1), privacy_settings + '\n' + match.group(1), 1)
+        print("Added privacy mode settings")
+    
     # Enable currency engine if it exists
     if 'name: currency' in content:
         pattern = r'(name: currency\n)(?!    disabled:)'
