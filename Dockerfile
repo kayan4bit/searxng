@@ -63,10 +63,8 @@ COPY --chown=searxng:searxng ./src/run.sh /usr/local/bin/run.sh
 COPY --chown=searxng:searxng ./src/limiter.toml /etc/searxng/limiter.toml
 COPY --chown=searxng:searxng ./src/favicons.toml /etc/searxng/favicons.toml
 
-# make our patches to searxng's code to allow for the custom theming (all themes)
-RUN sed -i "/'simple_style': EnumStringSetting(/,/center_alignment/ s/choices=\[\"\", \"auto\", \"light\", \"dark\", \"black\"\]/choices=[\"\", \"auto\", \"light\", \"dark\", \"black\", \"paulgo\", \"latte\", \"frappe\", \"macchiato\", \"mocha\", \"kagi\", \"brave\", \"moa\", \"night\", \"dracula\", \"gruvbox\", \"gruvboxmat\", \"everforest\", \"nord\", \"matcha\", \"evergarden\", \"catppuccin-mocha\", \"catppuccin-macchiato\", \"catppuccin-frappe\", \"catppuccin-latte\", \"tokyo-night\", \"solarized\", \"one-dark\", \"monokai\", \"gruvbox-light\", \"github\", \"nord-frost\", \"dracula-pro\", \"material-ocean\"]/" searx/preferences.py \
-&& sed -i "s/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black')/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black', 'paulgo', 'latte', 'frappe', 'macchiato', 'mocha', 'kagi', 'brave', 'moa', 'night', 'dracula', 'gruvbox', 'gruvboxmat', 'everforest', 'nord', 'matcha', 'evergarden', 'catppuccin-mocha', 'catppuccin-macchiato', 'catppuccin-frappe', 'catppuccin-latte', 'tokyo-night', 'solarized', 'one-dark', 'monokai', 'gruvbox-light', 'github', 'nord-frost', 'dracula-pro', 'material-ocean')/" searx/settings_defaults.py \
-&& sed -i "s/{%- for name in \['auto', 'light', 'dark', 'black'\] -%}/{%- for name in \['auto', 'light', 'dark', 'black', 'paulgo', 'latte', 'frappe', 'macchiato', 'mocha', 'kagi', 'brave', 'moa', 'night', 'dracula', 'gruvbox', 'gruvboxmat', 'everforest', 'nord', 'matcha', 'evergarden', 'catppuccin-mocha', 'catppuccin-macchiato', 'catppuccin-frappe', 'catppuccin-latte', 'tokyo-night', 'solarized', 'one-dark', 'monokai', 'gruvbox-light', 'github', 'nord-frost', 'dracula-pro', 'material-ocean'\] -%}/" searx/templates/simple/preferences/theme.html
+# Simple theme settings
+RUN sed -i 's/simple_style: auto/simple_style: dark/' searx/settings.yml
 
 # Enable ONLY Serper engine (Kagi-style ranking) - no duplicates
 RUN sed -i 's/# - name: serper/- name: serper/' searx/settings.yml \
@@ -136,9 +134,8 @@ COPY --chown=searxng:searxng ./src/search/ai_summary.py searx/search/ai_summary.
 COPY --chown=searxng:searxng ./src/patch_templates.py /tmp/patch_templates.py
 RUN python3 /tmp/patch_templates.py
 
-# Premium themes - copy ALL theme files and compile
-COPY --chown=searxng:searxng ./src/less/themes/ searx/less/themes/
-RUN ls -la searx/less/themes/ | head -20
+# Load E2EE, AI modules into webapp
+RUN sed -i "s/from searx.webapp import app/from searx.webapp import app\nfrom searx.search.privacy_middleware import PrivacyMiddleware\nfrom searx.search.ai_summary import apply_api_routes\nPrivacyMiddleware(app)\napply_api_routes(app)/" searx/webapp.py
 
 # Force nord-frost theme in settings.yml
 RUN sed -i 's/simple_style: auto/simple_style: nord-frost/' searx/settings.yml
