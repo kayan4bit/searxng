@@ -3,13 +3,14 @@
 import os, re
 base = "/usr/local/searxng/searx/templates/simple/base.html"
 html = '''<style>
-.sxng-ai-wrap{position:fixed;bottom:20px;right:20px;z-index:99999}
-.sxng-ai-btn{background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:14px 18px;border-radius:50px;cursor:pointer;font-size:13px;font-weight:600;box-shadow:0 4px 25px rgba(16,185,129,.5);display:flex;align-items:center;gap:8px;font-family:system-ui}
-.sxng-ai-btn:hover{transform:scale(1.05);box-shadow:0 6px 30px rgba(16,185,129,.6)}
-.sxng-pv-wrap{position:fixed;bottom:20px;left:20px;z-index:99999}
-.sxng-pv-btn{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;padding:12px 16px;border-radius:50px;cursor:pointer;font-size:12px;font-weight:600;box-shadow:0 4px 20px rgba(99,102,241,.4);font-family:system-ui;display:flex;align-items:center;gap:6px}
-.sxng-pv-btn:hover{transform:scale(1.05);box-shadow:0 6px 25px rgba(99,102,241,.5)}
-.sxng-pv-dot{width:8px;height:8px;background:#10b981;border-radius:50%;animation:pulse 2s infinite}
+.sxng-ai-wrap{position:fixed;bottom:24px;right:24px;z-index:1000001!important}
+.sxng-ai-btn{background:linear-gradient(135deg,#10b981,#059669)!important;color:#fff!important;border:none!important;padding:16px 20px!important;border-radius:50px!important;cursor:pointer!important;font-size:14px!important;font-weight:700!important;box-shadow:0 4px 25px rgba(16,185,129,.5)!important;display:flex!important;align-items:center!important;gap:8px!important;font-family:system-ui!important;z-index:99999!important;pointer-events:auto!important}
+.sxng-ai-btn:hover{transform:scale(1.08)!important;box-shadow:0 6px 30px rgba(16,185,129,.6)!important}
+.sxng-pv-wrap{position:fixed;bottom:24px;left:24px;z-index:1000001!important}
+.sxng-pv-btn{background:linear-gradient(135deg,#6366f1,#4f46e5)!important;color:#fff!important;border:none!important;padding:14px 18px!important;border-radius:50px!important;cursor:pointer!important;font-size:13px!important;font-weight:700!important;box-shadow:0 4px 20px rgba(99,102,241,.4)!important;font-family:system-ui!important;display:flex!important;align-items:center!important;gap:6px!important;z-index:1000001!important;pointer-events:auto!important}
+.sxng-pv-btn:hover{transform:scale(1.08)!important;box-shadow:0 6px 25px rgba(99,102,241,.5)!important}
+.sxng-pv-dot{width:10px;height:10px;background:#10b981;border-radius:50%;animation:sxngPulse 2s infinite;flex-shrink:0}
+@keyframes sxngPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .sxng-panel{position:fixed;top:0;right:-420px;width:400px;height:100vh;background:#fff;z-index:100000;box-shadow:-4px 0 50px rgba(0,0,0,.3);transition:right .3s ease;display:flex;flex-direction:column;font-family:system-ui}
 .sxng-panel.open{right:0}
@@ -62,15 +63,23 @@ html = '''<style>
 }</style>
 <div class="sxng-ov" id="sxngOv" onclick="sxngClose()"></div>
 <div class="sxng-pv-panel" id="sxngPvPanel">
-<div class="sxng-pv-hdr"><h3>Privacy</h3><button class="sxng-close" onclick="sxngPvClose()">X</button></div>
+<div class="sxng-pv-hdr"><h3>Privacy & Security</h3><button class="sxng-close" onclick="sxngPvClose()">X</button></div>
 <div class="sxng-pv-body">
 <div class="sxng-pv-stat">
+<h4>Privacy Mode</h4>
+<div class="sxng-mode">
+<button class="sxng-mode-btn fast" id="mode-fast" onclick="sxngSetMode('fast')"><div><strong>Speed</strong><small>Fast, some tracking blocked</small></div><span>⚡ Fast</span></button>
+<button class="sxng-mode-btn" id="mode-balanced" onclick="sxngSetMode('balanced')"><div><strong>Balanced</strong><small>Good privacy + E2EE</small></div><span>🛡 Good</span></button>
+<button class="sxng-mode-btn max" id="mode-max" onclick="sxngSetMode('max')"><div><strong>Maximum</strong><small>Full E2EE + IP spoofing</small></div><span>🔒 Max</span></button>
+</div>
+</div>
+<div class="sxng-pv-stat">
 <h4>Security Status</h4>
-<div class="sxng-pv-item">E2EE <span>AES-256-GCM</span></div>
+<div class="sxng-pv-item">E2EE <span id="sxngE2ee">AES-256-GCM</span></div>
 <div class="sxng-pv-item">CSP Nonce <span>Per Request</span></div>
 <div class="sxng-pv-item">Trackers Blocked <span>60+</span></div>
 <div class="sxng-pv-item">Zero Logs <span>Enabled</span></div>
-<div class="sxng-pv-item">Headers <span>Hardened</span></div>
+<div class="sxng-pv-item">IP Spoofing <span id="sxngIp">Off</span></div>
 </div>
 <div class="sxng-pv-api" id="sxngPvApi">
 <h4>Zero-Config API</h4>
