@@ -111,6 +111,13 @@ COPY --chown=searxng:searxng ./src/search/privacy_selector.py searx/search/priva
 COPY --chown=searxng:searxng ./src/search/premium_security.py searx/search/premium_security.py
 COPY --chown=searxng:searxng ./src/search/ai_summarize.py searx/search/ai_summarize.py
 
+# Privacy indicator badge - inject directly using Python after build
+COPY --chown=searxng:searxng ./src/privacy-indicator/privacy-indicator.html /tmp/privacy-badge.html
+COPY --chown=searxng:searxng ./src/inject_badge.py /tmp/inject_badge.py
+
+# Add privacy badge via Python script
+RUN python3 /tmp/inject_badge.py
+
 # Premium themes
 COPY --chown=searxng:searxng ./src/less/themes/ searx/less/themes/
 

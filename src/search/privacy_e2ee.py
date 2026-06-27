@@ -476,6 +476,20 @@ def apply_privacy_patches(app) -> None:
         privacy._cache.clear()
         return jsonify({"status": "cache cleared", "success": True})
     
+    @app.route('/api/privacy/mode', methods=['POST'])
+    def set_privacy_mode():
+        """Set privacy mode from client."""
+        try:
+            data = request.get_json()
+            mode = data.get('mode', 'balanced')
+            if mode in ['speed', 'balanced', 'privacy']:
+                response = jsonify({"success": True, "mode": mode})
+                response.set_cookie('privacy_mode', mode, max_age=60*60*24*30)
+                return response
+        except:
+            pass
+        return jsonify({"error": "Invalid request"}), 400
+    
     @app.route('/health', methods=['GET'])
     @app.route('/api/health', methods=['GET'])
     def health_check():
