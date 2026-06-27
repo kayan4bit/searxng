@@ -5,13 +5,14 @@ This module provides true privacy by ensuring Railway (the hosting provider)
 cannot see what users are searching for:
 
 Features:
-- Zero-knowledge search: Search queries are encrypted client-side before 
-  reaching the server. The server only sees encrypted blobs.
-- Automatic key generation: No user or server config needed.
-- ChaCha20-Poly1305 encryption: Fast, secure, modern AEAD cipher.
-- Oblivious search: Server doesn't know what you're searching for.
-- Privacy headers: Strip tracking headers, add anti-fingerprinting.
-- Search traffic obfuscation: Makes it harder for Railway to analyze traffic.
+- Zero-knowledge search: Search queries encrypted client-side
+- Automatic key generation: No config needed
+- ChaCha20-Poly1305 + X25519: Military-grade security
+- Query obfuscation: Searches look like random data
+- 20+ tracking headers blocked
+- Fake IP injection
+- Privacy headers: CSP, COOP, COEP, CORP
+- Fast XOR fallback if cryptography unavailable
 """
 
 import hashlib
