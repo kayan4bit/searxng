@@ -1,0 +1,240 @@
+// Dracula Pro Theme
+// A refined, premium dark theme with vibrant accents
+
+@theme: 'dracula-pro';
+
+@dracula-bg: #1a1b26;
+@dracula-bg-soft: #24283b;
+@dracula-bg-highlight: #414868;
+
+@dracula-fg: #c0caf5;
+@dracula-fg-sub: #9aa5ce;
+@dracula-fg-muted: #565f89;
+
+@dracula-comment: #6272a4;
+@dracula-cyan: #7dcfff;
+@dracula-magenta: #ff79c6;
+@dracula-green: #50fa7b;
+@dracula-orange: #ffb86c;
+@dracula-purple: #bd93f9;
+@dracula-red: #ff5555;
+@dracula-yellow: #f1fa8c;
+
+@bg: @dracula-bg;
+@bg-soft: @dracula-bg-soft;
+@bg-highlight: @dracula-bg-highlight;
+
+@text: @dracula-fg;
+@text-sub: @dracula-fg-sub;
+@text-muted: @dracula-fg-muted;
+
+@accent: @dracula-purple;
+@accent-hover: @dracula-cyan;
+@link: @dracula-cyan;
+
+@border: @dracula-bg-highlight;
+@border-focus: @dracula-purple;
+
+// Result items
+.result {
+    background: @bg-soft;
+    border: 1px solid @border;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    
+    &:hover {
+        background: @bg-highlight;
+        border-color: @accent;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(189, 147, 249, 0.15);
+    }
+    
+    h3 a {
+        color: @accent;
+        font-weight: 600;
+        
+        &:hover {
+            color: @accent-hover;
+        }
+    }
+    
+    .content {
+        color: @text-sub;
+        line-height: 1.6;
+    }
+    
+    .url {
+        color: @dracula-cyan;
+        
+        &::before {
+            content: "↗ ";
+        }
+    }
+    
+    .highlight {
+        background: rgba(241, 250, 140, 0.15);
+        color: @dracula-yellow;
+        padding: 0 2px;
+        border-radius: 2px;
+    }
+}
+
+// Search bar
+#search_form {
+    input[type="text"] {
+        background: @bg-soft;
+        color: @text;
+        border: 2px solid @border;
+        border-radius: 12px;
+        font-size: 18px;
+        padding: 12px 20px;
+        transition: all 0.3s ease;
+        
+        &:focus {
+            border-color: @accent;
+            box-shadow: 0 0 0 4px rgba(189, 147, 249, 0.2);
+        }
+        
+        &::placeholder {
+            color: @text-muted;
+        }
+    }
+    
+    button[type="submit"] {
+        background: linear-gradient(135deg, @dracula-purple, @dracula-magenta);
+        color: white;
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 12px 24px;
+        transition: all 0.3s ease;
+        
+        &:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(189, 147, 249, 0.4);
+        }
+    }
+}
+
+// General body
+body {
+    background: @bg;
+    color: @text;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    line-height: 1.6;
+}
+
+a {
+    color: @link;
+    transition: color 0.2s ease;
+    
+    &:hover {
+        color: @accent-hover;
+    }
+}
+
+// Sidebar
+.sidebar {
+    background: @bg-soft;
+    border-radius: 12px;
+    
+    .engine {
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        
+        &:hover {
+            background: @bg-highlight;
+            transform: translateX(4px);
+        }
+        
+        &.active {
+            background: linear-gradient(135deg, @dracula-purple, @dracula-cyan);
+            color: white;
+            box-shadow: 0 2px 8px rgba(189, 147, 249, 0.3);
+        }
+    }
+}
+
+// Checkbox/Radio
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: @accent;
+    width: 18px;
+    height: 18px;
+}
+
+// Select dropdowns
+select {
+    background: @bg-soft;
+    color: @text;
+    border: 1px solid @border;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    
+    &:focus {
+        border-color: @accent;
+        box-shadow: 0 0 0 3px rgba(189, 147, 249, 0.2);
+    }
+}
+
+// Buttons
+button,
+.btn {
+    background: @bg-highlight;
+    color: @text;
+    border: 1px solid @border;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    
+    &:hover {
+        background: @accent;
+        color: white;
+        border-color: @accent;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(189, 147, 249, 0.3);
+    }
+}
+
+// Results count
+.results_count {
+    color: @text-muted;
+    font-size: 14px;
+}
+
+// Loading
+.loading {
+    color: @dracula-cyan;
+    
+    &::after {
+        content: "...";
+        animation: dots 1.5s infinite;
+    }
+}
+
+@keyframes dots {
+    0%, 20% { content: "."; }
+    40% { content: ".."; }
+    60%, 100% { content: "..."; }
+}
+
+// Autocomplete
+.autocomplete {
+    background: @bg-soft;
+    border: 1px solid @border;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    
+    .item {
+        padding: 12px 16px;
+        border-radius: 8px;
+        transition: all 0.15s ease;
+        
+        &:hover,
+        &.selected {
+            background: @bg-highlight;
+            color: @accent;
+        }
+    }
+}

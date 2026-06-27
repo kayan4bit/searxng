@@ -68,6 +68,15 @@ RUN sed -i "/'simple_style': EnumStringSetting(/,/center_alignment/ s/choices=\[
 && sed -i "s/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black')/SIMPLE_STYLE = ('auto', 'light', 'dark', 'black', 'paulgo', 'latte', 'frappe', 'macchiato', 'mocha', 'kagi', 'brave', 'moa', 'night', 'dracula', 'gruvbox', 'gruvboxmat', 'everforest', 'nord', 'matcha', 'evergarden', 'catppuccin-mocha', 'catppuccin-macchiato', 'catppuccin-frappe', 'catppuccin-latte', 'tokyo-night', 'solarized', 'one-dark', 'monokai', 'gruvbox-light', 'github', 'nord-frost', 'dracula-pro', 'material-ocean')/" searx/settings_defaults.py \
 && sed -i "s/{%- for name in \['auto', 'light', 'dark', 'black'\] -%}/{%- for name in \['auto', 'light', 'dark', 'black', 'paulgo', 'latte', 'frappe', 'macchiato', 'mocha', 'kagi', 'brave', 'moa', 'night', 'dracula', 'gruvbox', 'gruvboxmat', 'everforest', 'nord', 'matcha', 'evergarden', 'catppuccin-mocha', 'catppuccin-macchiato', 'catppuccin-frappe', 'catppuccin-latte', 'tokyo-night', 'solarized', 'one-dark', 'monokai', 'gruvbox-light', 'github', 'nord-frost', 'dracula-pro', 'material-ocean'\] -%}/" searx/templates/simple/preferences/theme.html
 
+# Enable Kagi engine and disable others using sed
+RUN sed -i 's/# - name: kagi/- name: kagi/' searx/settings.yml \
+&& sed -i 's/#   engine: kagi/  engine: kagi/' searx/settings.yml \
+&& sed -i 's/#   kagi_categ: search/  kagi_categ: search/' searx/settings.yml \
+&& sed -i 's/#   shortcut: kg/  shortcut: kg/' searx/settings.yml \
+&& sed -i 's/simple_style: auto/simple_style: dracula-pro/' searx/settings.yml \
+&& sed -i 's/safe_search: 0/safe_search: 1/' searx/settings.yml \
+&& sed -i 's/method: "POST"/method: "GET"/' searx/settings.yml
+
 # make patch to allow the privacy policy page
 COPY --chown=searxng:searxng ./src/privacy-policy/privacy-policy.html searx/templates/simple/privacy-policy.html
 RUN sed -i "/@app\.route('\/client<token>\.css', methods=\['GET', 'POST'\])/i \ \n@app.route('\/privacy', methods=\['GET'\])\ndef privacy_policy():return render('privacy-policy.html')\n" searx/webapp.py
@@ -99,11 +108,11 @@ COPY --chown=searxng:searxng ./src/engines/kagi.py searx/engines/kagi.py
 # Privacy, Zero-Knowledge E2EE, and AI modules
 COPY --chown=searxng:searxng ./src/search/privacy_e2ee.py searx/search/privacy_e2ee.py
 COPY --chown=searxng:searxng ./src/search/privacy_selector.py searx/search/privacy_selector.py
+COPY --chown=searxng:searxng ./src/search/premium_security.py searx/search/premium_security.py
 COPY --chown=searxng:searxng ./src/search/ai_summarize.py searx/search/ai_summarize.py
 
-# Settings patch script (replaces complex sed commands)
-COPY --chown=searxng:searxng ./src/settings_patch.py searx/settings_patch.py
-RUN python3 searx/settings_patch.py
+# Premium themes
+COPY --chown=searxng:searxng ./src/less/themes/ searx/less/themes/
 
 # fix opensearch autocompleter (force method of autocompleter to use GET reuqests)
 RUN sed -i '/{% if autocomplete %}/,/{% endif %}/s|method="{{ opensearch_method }}"|method="GET"|g' searx/templates/simple/opensearch.xml

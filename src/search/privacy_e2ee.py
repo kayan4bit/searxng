@@ -374,7 +374,6 @@ def apply_privacy_patches(app) -> None:
         """Strip every tracking header before request processing."""
         # Check privacy mode
         strict_mode = privacy._strict_mode
-        fake_ip_enabled = True
         
         if has_mode_manager:
             try:
@@ -385,14 +384,18 @@ def apply_privacy_patches(app) -> None:
             except Exception:
                 pass
         
-        if request.headers:
-            cleaned = privacy.strip_tracking_headers(dict(request.headers))
-            request.headers._list = [(k, v) for k, v in cleaned.items()]
+        # Strip tracking headers by modifying environ (not headers directly)
+        if request.environ:
+            # Remove tracking headers from environ
+            for header in list(request.environ.keys()):
+                if header.lower() in TRACKING_HEADERS or header.lower().startswith('cf-') or header.lower().startswith('x-railway'):
+                    del request.environ[header]
         
         # In strict mode, add fake IP to prevent Railway logging real one
         if strict_mode:
-            if "X-Forwarded-For" not in request.headers and "X-Real-IP" not in request.headers:
-                request.headers.add("X-Forwarded-For", privacy.generate_fake_ip())
+            # Add fake IP to environ (works with immutable headers)
+            if "HTTP_X_FORWARDED_FOR" not in request.environ and "HTTP_X_REAL_IP" not in request.environ:
+                request.environ["HTTP_X_FORWARDED_FOR"] = privacy.generate_fake_ip()
     
     @app.after_request
     def add_privacy_headers(response):
