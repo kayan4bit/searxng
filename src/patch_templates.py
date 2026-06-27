@@ -53,6 +53,19 @@ html = '''<style>
 .sxng-pv-api pre{background:#fff;padding:10px;border-radius:6px;font-size:11px;overflow-x:auto;margin:0;word-break:break-all}
 .sxng-pv-copy{background:#10b981;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:12px;margin-top:10px;width:100%}
 .sxng-pv-copy:hover{background:#059669}
+.sxng-node-reg{background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #f59e0b;border-radius:12px;padding:16px;margin-top:20px}
+.sxng-node-reg h4{margin:0 0 12px;font-size:14px;color:#92400e;font-weight:600}
+.sxng-node-reg input{width:100%;padding:10px;border:2px solid #f59e0b;border-radius:8px;font-size:13px;margin-bottom:8px;box-sizing:border-box}
+.sxng-node-reg input:focus{outline:none;border-color:#d97706}
+.sxng-node-reg button{width:100%;padding:12px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;margin-top:8px}
+.sxng-node-reg button:hover{transform:scale(1.02)}
+.sxng-node-reg .perks{font-size:11px;color:#78350f;margin-top:10px;padding:8px;background:#fff;border-radius:6px}
+.sxng-node-status{font-size:12px;color:#065f46;padding:8px;background:#d1fae5;border-radius:6px;margin-top:8px;display:none}
+.sxng-node-logged{background:#d1fae5;border:2px solid #10b981;border-radius:12px;padding:16px;margin-top:20px}
+.sxng-node-logged h4{margin:0 0 8px;font-size:14px;color:#065f46}
+.sxng-node-logged .key{display:flex;align-items:center;gap:8px;padding:8px;background:#fff;border-radius:6px;margin-bottom:8px}
+.sxng-node-logged .key code{flex:1;font-size:11px;word-break:break-all;color:#6b7280}
+.sxng-node-logged .heartbeat{font-size:11px;color:#059669;padding:6px;background:#ecfdf5;border-radius:4px;text-align:center}
 @media(max-width:480px){
 .sxng-ai-wrap,.sxng-pv-wrap{bottom:15px}
 .sxng-ai-wrap{right:15px}
@@ -86,6 +99,19 @@ html = '''<style>
 <pre id="sxngPvKey">Loading...</pre>
 <button class="sxng-pv-copy" onclick="sxngPvCopy()">Copy API Key</button>
 </div>
+<div class="sxng-node-reg" id="sxngNodeReg">
+<h4>🖥️ Become a Node Operator</h4>
+<input type="text" id="sxngNodeEmail" placeholder="Your email">
+<input type="text" id="sxngNodeName" placeholder="Node name">
+<button onclick="sxngRegisterNode()">Register as Node</button>
+<div class="perks">🎁 Perks: Faster searches, Beta features, Privacy dashboard</div>
+<div class="sxng-node-status" id="sxngNodeStatus"></div>
+</div>
+<div class="sxng-node-logged" id="sxngNodeLogged" style="display:none">
+<h4>🟢 Node Registered</h4>
+<div class="key"><code id="sxngNodeKey">---</code></div>
+<div class="heartbeat" id="sxngHeartbeat">❤️ Sending heartbeat...</div>
+</div>
 </div>
 </div>
 <div class="sxng-panel" id="sxngPanel">
@@ -118,6 +144,9 @@ function sxngTyp(){var d=document.createElement("div");d.className="sxng-msg ai 
 function sxngSum(){var q=document.querySelector("input[name=q]")?.value||"";var e=document.getElementById("sxngSum");if(!q){e.innerHTML="Search something first!";e.classList.add("show");return}e.innerHTML="Loading...";e.classList.add("show");fetch("/api/summary",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q})}).then(r=>r.json()).then(function(d){e.innerHTML=(d.summary||"No summary").replace(/\\n/g,"<br>")}).catch(function(){e.innerHTML="Error loading summary"})}
 function sxngSend(){var i=document.getElementById("sxngInp");var m=i.value.trim();if(!m)return;h.push({role:"user",content:m});i.value="";var t=sxngTyp();fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:m})}).then(r=>r.json()).then(function(d){t.classList.remove("ld");t.classList.add("ai");t.innerHTML=(d.response||"No response").replace(/\\n/g,"<br>");h.push({role:"ai",content:d.response})}).catch(function(){t.classList.remove("ld");t.classList.add("err");t.innerHTML="Error"})}
 window.sxngOpen=sxngOpen;window.sxngClose=sxngClose;window.sxngPvOpen=sxngPvOpen;window.sxngPvClose=sxngPvClose;
+window.sxngRegisterNode=function(){var e=document.getElementById("sxngNodeEmail").value;var n=document.getElementById("sxngNodeName").value;var s=document.getElementById("sxngNodeStatus");if(!e||!n){if(s)s.style.display="block",s.textContent="Fill all fields";return}if(s)s.style.display="block",s.textContent="Registering...";fetch("/api/node/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:e,name:n})}).then(function(r){return r.json()}).then(function(d){if(d.node_id){localStorage.setItem("node_key",d.node_id);document.getElementById("sxngNodeReg").style.display="none";var l=document.getElementById("sxngNodeLogged");l.style.display="block";document.getElementById("sxngNodeKey").textContent=d.node_id;startHeartbeat(d.node_id)}else{if(s)s.textContent=d.error||"Error"}}).catch(function(){if(s)s.textContent="Connection error"})};
+function startHeartbeat(key){setInterval(function(){fetch("/api/node/heartbeat",{method:"POST",headers:{"X-Session-Token":key}}).then(function(r){return r.json()}).then(function(d){var h=document.getElementById("sxngHeartbeat");if(h)h.textContent="❤️ Heartbeat: "+(d.alive?"Active":"Inactive")}).catch(function(){var h=document.getElementById("sxngHeartbeat");if(h)h.textContent="❤️ Offline"})},30000)}
+var savedKey=localStorage.getItem("node_key");if(savedKey){document.getElementById("sxngNodeReg").style.display="none";var l=document.getElementById("sxngNodeLogged");l.style.display="block";document.getElementById("sxngNodeKey").textContent=savedKey;startHeartbeat(savedKey)}
 })();
 </script>'''
 if os.path.exists(base):
